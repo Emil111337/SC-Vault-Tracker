@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rare Loot Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04080e;--bg2:#09141f;--panel:rgba(12,26,42,.88);--line:rgba(80,190,255,.24);--grid:rgba(80,190,255,.05);--text:#d6ecf8;--dim:#7d9bb0;--acc:#3cc8ff;--glow:0 0 18px rgba(60,200,255,.3);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#e8f0f6;--bg2:#dbe8f1;--panel:rgba(255,255,255,.92);--line:rgba(10,110,170,.3);--grid:rgba(10,110,170,.07);--text:#0c2535;--dim:#4d6a7e;--acc:#0a7db5;--glow:0 0 14px rgba(10,125,181,.2);color-scheme:light}}
+:root[data-theme="light"]{--bg:#e8f0f6;--bg2:#dbe8f1;--panel:rgba(255,255,255,.92);--line:rgba(10,110,170,.3);--grid:rgba(10,110,170,.07);--text:#0c2535;--dim:#4d6a7e;--acc:#0a7db5;--glow:0 0 14px rgba(10,125,181,.2);color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;min-height:100vh;color:var(--text);font:600 16px/1.35 Rajdhani,"Segoe UI",system-ui,sans-serif;background:radial-gradient(1100px 500px at 85% -10%,rgba(60,200,255,.13),transparent),linear-gradient(var(--grid) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/44px 44px,var(--bg)}
+svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+h2,h3,.orb,button,.stat b{font-family:Orbitron,Eurostile,"Bank Gothic",sans-serif}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(var(--panel),transparent)}
+.logo{display:flex;align-items:center;gap:10px;color:var(--acc)}.logo svg{width:36px;height:36px;filter:drop-shadow(0 0 6px var(--acc))}
+.logo b{display:block;font:900 20px Orbitron,sans-serif;letter-spacing:.2em;text-shadow:var(--glow)}.logo small{color:var(--dim);letter-spacing:.32em;font-size:10px}
+nav{display:flex;gap:4px;margin-left:auto}.acts{display:flex;gap:6px}
+button{cursor:pointer;color:var(--text);background:transparent;border:1px solid var(--line);padding:8px 14px;font-weight:600;font-size:11px;letter-spacing:.14em;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);transition:.15s}
+button:hover,button.on{background:rgba(60,200,255,.16);border-color:var(--acc);color:var(--acc)}
+button.pri{background:var(--acc);color:#02101a;border-color:var(--acc)}button.pri:hover{background:#ffb347;color:#02101a}
+button.danger:hover{color:#ff6b5b;border-color:#ff6b5b;background:rgba(255,107,91,.12)}
+main{padding:0 20px 50px;max-width:1500px;margin:auto}
+#stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:16px 0 4px}
+.stat{padding:8px 14px;border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--panel)}
+.stat b{display:block;font-size:22px;color:var(--acc)}.stat span{font-size:11px;letter-spacing:.22em;color:var(--dim)}
+#cats{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}#cats button{display:flex;align-items:center;gap:6px}#cats svg{width:16px;height:16px}#cats em{font-style:normal;color:var(--dim)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+input,select,textarea{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:8px 10px;font:inherit;border-radius:0}
+input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{flex:1 1 220px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}
+.card{--r:#3cc8ff;position:relative;padding:14px 14px 10px 16px;border:1px solid var(--line);border-left:3px solid var(--r);cursor:pointer;background:linear-gradient(135deg,var(--panel),transparent 150%);box-shadow:inset 0 0 45px color-mix(in srgb,var(--r) 14%,transparent);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));transition:.15s}
+.card:hover{transform:translateY(-2px);border-color:var(--r)}
+.card .ic{position:absolute;right:16px;top:12px;width:28px;height:28px;color:var(--r)}
+.card h3{margin:0 38px 3px 0;font-size:13px;letter-spacing:.06em;line-height:1.3}.card .m{color:var(--dim);font-size:14px}
+.tags{margin-top:4px}.tags span,.chip{display:inline-block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:1px 7px;border:1px solid var(--line);margin:4px 4px 0 0}
+.tags .rar{color:var(--r);border-color:var(--r)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:14px;color:var(--dim);gap:8px}
+.q{display:flex;align-items:center;gap:6px;color:var(--text)}.q i{font-style:normal;width:20px;height:20px;text-align:center;border:1px solid var(--line);cursor:pointer}.q i:hover{border-color:var(--acc);color:var(--acc)}.q b{font:700 13px Orbitron,sans-serif;min-width:26px;text-align:center}
+.empty{grid-column:1/-1;padding:44px 16px;text-align:center;color:var(--dim);border:1px dashed var(--line)}.empty button{margin:10px 4px 0}
+.bcard{border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--panel);padding:14px 16px;margin-bottom:12px}
+.bh{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.bh h3{margin:0;font-size:15px;letter-spacing:.08em}.bh .orb{margin-left:auto;font-size:12px;letter-spacing:.14em}
+.ok{color:#5fd36b}.miss{color:#ff6b5b}
+.slot{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);margin-top:8px}
+.slot small{display:block;color:var(--dim);font-size:13px;font-weight:500}.slot .orb{font-size:11px}
+#modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,8,14,.75);backdrop-filter:blur(4px);z-index:20;padding:16px}#modal.open{display:flex}
+#box{width:min(640px,100%);max-height:90vh;overflow:auto;background:var(--bg2);border:1px solid var(--acc);padding:20px;box-shadow:var(--glow)}
+#box h2{margin:0 0 14px;font-size:16px;letter-spacing:.18em;color:var(--acc)}
+.fm{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fm label{display:flex;flex-direction:column;gap:3px;font:600 10px Orbitron,sans-serif;letter-spacing:.18em;color:var(--dim)}.fm .w{grid-column:1/-1}
+.row{display:flex;gap:8px;margin-top:16px;align-items:center}.row span{flex:1}
+.srow{display:grid;grid-template-columns:1.6fr 1fr 70px auto;gap:6px;margin-bottom:6px}.dim{color:var(--dim);font-weight:500}
+.qa{display:flex;gap:8px;margin:16px 0 0}.qa input{flex:1;border-color:var(--acc);box-shadow:var(--glow)}#msg,#smsg{min-height:20px;margin:6px 0 0;color:var(--dim);font-size:14px}#msg.err,#smsg.err{color:#ff6b5b}
+.picks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.picks small{color:var(--dim);font-weight:500;letter-spacing:0;font-size:11px;margin-left:6px}
+#sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;align-items:start}
+.scard{padding:14px 16px;border:1px solid var(--line);border-left:3px solid var(--acc);background:linear-gradient(135deg,var(--panel),transparent 150%);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
+.scard .sh{display:flex;gap:12px;align-items:center}.scard .ic{width:34px;height:34px;color:var(--acc);flex:none}.scard h3{margin:0;font-size:14px;letter-spacing:.08em}.scard .m{color:var(--dim);font-size:14px}
+.bar2{height:4px;background:var(--line);margin:10px 0 4px}.bar2 span{display:block;height:100%;background:var(--acc)}
+.slots{display:flex;flex-direction:column;gap:6px;margin:8px 0;max-height:560px;overflow:auto}
+.slotb{display:grid;grid-template-columns:18px 28px minmax(0,.65fr) minmax(0,1.35fr);gap:8px;align-items:center;text-align:left;padding:5px 8px;clip-path:none;letter-spacing:.06em;border:1px solid var(--line);border-left:3px solid var(--r,var(--line))}
+.slotb svg{width:16px;height:16px}.slotb b{font:700 10px Orbitron,sans-serif;white-space:nowrap}.slotb i{font:500 14px Rajdhani,sans-serif;font-style:normal;letter-spacing:0;color:var(--dim);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slotb.on i{color:var(--text)}
+.slotb .sl{font:500 13px/1.2 Rajdhani,sans-serif;letter-spacing:0;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slotb i small.mm{color:#ff6b5b;border-color:#ff6b5b}.slotb i.st{display:flex;justify-content:flex-end;align-items:center;gap:6px;min-width:0;font-style:italic;opacity:.9}.slotb i.st span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slotb i.st small{flex:none;margin:0}.slotb i small{font:700 8px Orbitron,sans-serif;font-style:normal;letter-spacing:.12em;color:var(--acc);border:1px solid var(--line);padding:0 4px;margin-left:4px;vertical-align:1px}
+.grp{border:1px solid var(--line);background:rgba(60,200,255,.03)}.grp>summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:6px 10px;list-style:none;font:700 11px Orbitron,sans-serif;letter-spacing:.16em;color:var(--acc);background:rgba(60,200,255,.07)}
+.grp>summary::-webkit-details-marker{display:none}.grp>summary::before{content:'\25B8';display:inline-block;transition:.15s}.grp[open]>summary::before{transform:rotate(90deg)}
+.grp>summary em{margin-left:auto;font:500 13px Rajdhani,sans-serif;font-style:normal;letter-spacing:0;color:var(--dim)}.grp .slotb{margin:4px;width:calc(100% - 8px)}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--line)}.prow small{display:block;color:var(--dim);font-size:13px;font-weight:500}.prow.here{background:rgba(60,200,255,.1)}
+.srow2{display:grid;grid-template-columns:1.2fr .6fr 1.4fr auto;gap:6px;margin-bottom:6px}
+.tags .eq{background:var(--acc);color:var(--bg);border-color:var(--acc)}.tags .warn{color:#ff6b5b;border-color:#ff6b5b}.tags .spare{color:var(--dim)}
+@media(max-width:560px){.srow2{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.fm{grid-template-columns:1fr}nav{margin-left:0;width:100%}.srow{grid-template-columns:1fr 1fr 60px auto}}
+
+.scard{--r:var(--acc);border-left-color:var(--r)}.scard .sh{cursor:pointer}.scard .sh:hover h3{color:var(--r)}.scard .ic{color:var(--r)}
+.scard .sh>div:nth-child(2){flex:1;min-width:0}.scard .sh .rt{flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.scard .rt .chip{margin:0;color:var(--r);border-color:var(--r)}.scard .rt .px{font:700 12px Orbitron,sans-serif;letter-spacing:.06em;color:var(--dim)}
+.scard .sum{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 2px}.scard .sum span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:1px 7px;border:1px solid var(--line);color:var(--dim)}
+.scard .sum span b{font:700 11px Orbitron,sans-serif;color:var(--text);margin-left:4px}.scard .sum span.on{border-color:var(--acc);color:var(--acc)}.scard .sum span.on b{color:var(--acc)}
+.scard .sbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.scard .sbtns .tg{margin-right:auto}
+.scard .comp{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.gh{grid-column:1/-1;margin:10px 0 0;padding:4px 0;font:700 12px Orbitron,sans-serif;letter-spacing:.22em;color:var(--acc);border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}.gh em{font:500 13px Rajdhani,sans-serif;font-style:normal;letter-spacing:0;color:var(--dim)}.gh:first-child{margin-top:0}
+.srt{display:flex;gap:8px;margin:10px 0 0;align-items:center}.srt .dim{font-size:14px}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--dim);vertical-align:1px}.dot.ok{background:#5fd36b;box-shadow:0 0 6px #5fd36b}.dot.bad{background:#ff6b5b;box-shadow:0 0 6px #ff6b5b}.dot.wait{background:#ffb347}
+.sy ol{margin:6px 0 0;padding-left:20px;font-weight:500;color:var(--dim)}.sy li{margin:3px 0}.sy details{margin-top:12px;border:1px solid var(--line);padding:8px 12px}.sy summary{cursor:pointer;color:var(--acc);font:700 11px Orbitron,sans-serif;letter-spacing:.14em}.sy code,.sy textarea{font:12px/1.4 Consolas,monospace}.sy .fm{margin-top:10px}.sy .st{padding:6px 10px;border:1px solid var(--line);margin:8px 0}
+</style></head><body>
+<header>
+ <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 7l4.5 2.5v5L12 17l-4.5-2.5v-5z"/></svg><div><b>RARE LOOT VAULT</b><small>PERSONAL INVENTORY // MOBIGLAS</small></div></div>
+ <nav><button data-t="vault">VAULT</button><button data-t="fleet">FLEET</button><button data-t="builds">BUILDS</button></nav>
+ <div class="acts"><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="sync" id="syncb"><i class="dot off"></i>SYNC</button><button data-act="data">DATA</button></div>
+</header>
+<main>
+ <div id="stats"></div>
+ <section id="vault">
+  <div class="qa"><input id="qa" placeholder="Type an item name (e.g. Umbra) and press Enter to look it up and add it…"><button class="pri" id="qab" data-act="quick">FIND &amp; ADD</button></div><div id="msg"></div>
+  <div id="cats"></div>
+  <div class="bar"><input id="q" placeholder="Search name, maker, location, notes…"><select id="fcls"></select><select id="frar"></select><select id="fsort"><option value="rar">Sort: Rarity</option><option value="cat">Sort: Category</option><option value="name">Sort: Name</option><option value="qty">Sort: Quantity</option><option value="new">Sort: Newest</option></select><select id="fequ"><option value="">Equipped: any</option><option value="eq">On a ship</option><option value="spare">Not on a ship</option></select></div>
+  <div id="grid"></div>
+ </section>
+ <section id="builds" hidden>
+  <div class="bar" style="justify-content:space-between;align-items:center"><span class="dim">Plan a ship loadout. Each slot is checked against what you own, so you see exactly what to buy.</span><button class="pri" data-act="newBuild">+ NEW BUILD</button></div>
+  <div id="blist"></div>
+ </section>
+<section id="fleet" hidden>
+  <div class="qa"><input id="sq" placeholder="Type a ship name (e.g. Gladius) and press Enter to add it from the wiki…"><button class="pri" id="sqb" data-act="quickShip">FIND &amp; ADD SHIP</button><button data-act="newShip">+ MANUAL</button></div>
+  <div id="smsg"></div>
+  <div class="srt"><span class="dim">Fleet sorted by</span><select id="fsh"><option value="rar">Rarity</option><option value="price">Pledge price</option><option value="name">Name</option><option value="size">Size</option><option value="new">Newest</option></select><span class="dim" id="fcount"></span></div>
+  <div id="sgrid" style="margin-top:12px"></div>
+ </section>
+</main>
+<footer style="text-align:center;color:var(--dim);font-size:12px;padding:0 0 24px">Item data: Star Citizen Wiki API (api.star-citizen.wiki). Your vault is saved in this browser; use SYNC to share it with a friend, and DATA to keep a backup.</footer>
+<div id="modal"><div id="box"></div></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CATS={'Components':['Power Plant','Cooler','Shield','Quantum Drive','Jump Drive','Radar','Flight Controller','Shield Controller','Ship Armor','Life Support'],'Ship Weapons':['Gun','Turret','Mining Laser','Missile Rack','Countermeasure'],'Missiles':['Missile','Torpedo','Bomb'],'FPS Weapons':['Pistol','SMG','Rifle','Sniper','Shotgun','LMG','Launcher'],'Armor':['Helmet','Core','Arms','Legs','Backpack','Undersuit'],'Ships':['Variant','Livery','Other'],'Other':['Misc']};
+const IC={'Components':'M12 2l8.5 5v10L12 22l-8.5-5V7zM12 7.5l4 2.3v4.4l-4 2.3-4-2.3V9.8z','Ship Weapons':'M2 12h15M14 8l7 4-7 4M6 8v8M10 9v6','Missiles':'M3 21l5-5M8 16l9-9 4-4-4 1-9 9zM6 12l-3 1 4 4','FPS Weapons':'M2 10h12l2-2h6v4h-5l-1 3h-4l-1 3H7l1-3H2z','Armor':'M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z','Ships':'M12 2l3 8 7 4-7 1-1 7h-4l-1-7-7-1 7-4z','Other':'M12 3l9 5v8l-9 5-9-5V8zM12 12l9-4M12 12v9M12 12L3 8'};
+const ico=c=>`<svg viewBox="0 0 24 24"><path d="${IC[c]||IC.Other}"/></svg>`;
+const RAR=['Uncommon','Rare','Very Rare','Legendary'],RC={'Uncommon':'#5fd36b','Rare':'#3cc8ff','Very Rare':'#b46bff','Legendary':'#ffb347','Mythic':'#ff4d6d'};
+const CLS=['Military','Stealth','Industrial','Competition','Civilian'],SLOTSUBS=[...CATS['Components'],...CATS['Ship Weapons'],...CATS['Missiles']];
+const opts=(a,v)=>a.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+let S={items:[],builds:[],ships:[]},F={cat:'All',q:'',cls:'',rar:'',equ:'',sort:'rar'},tab='vault',ref=null,tm,cur,isNew,cb,cbNew;
+try{const c=localStorage.getItem('scvault');if(c)S=JSON.parse(c)}catch(e){}
+const norm=()=>{S.items=S.items||[];S.builds=S.builds||[];S.ships=S.ships||[];const ids=new Set(S.items.map(i=>i.id));S.ships.forEach(h=>{h.slots=h.slots||[];h.slots.forEach(s=>{if(s.item&&!ids.has(s.item))s.item=null})})};
+function persist(){try{localStorage.setItem('scvault',JSON.stringify(S))}catch(e){say('Could not save in this browser (storage full or blocked).',1)}SYNC.touch();render()}
+const own=(b,s)=>S.items.filter(i=>i.sub===s.sub&&(!s.size||String(i.size||'').toLowerCase()===s.size.toLowerCase())&&(!b.cls||i.cls===b.cls));
+const have=(b,s)=>own(b,s).reduce((n,i)=>n+(+i.qty||0),0);
+const missing=b=>b.slots.reduce((n,s)=>n+Math.max(0,s.qty-have(b,s)),0);
+const openM=()=>$('#modal').classList.add('open'),closeM=()=>$('#modal').classList.remove('open');
+function render(){
+ norm();const I=S.items;
+ $('#stats').innerHTML=[['Entries',I.length],['Total units',I.reduce((n,i)=>n+(+i.qty||0),0)],['Legendary',I.filter(i=>i.rar==='Legendary').length],['Ships',S.ships.length],['Builds ready',S.builds.filter(b=>b.slots.length&&!missing(b)).length+'/'+S.builds.length]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k.toUpperCase()}</span></div>`).join('');
+ $('#vault').hidden=tab!=='vault';$('#builds').hidden=tab!=='builds';$('#fleet').hidden=tab!=='fleet';
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ tab==='vault'?vault():tab==='fleet'?fleet():builds();
+}
+function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span>${i.loc?'▸ '+esc(i.loc):''}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
+function vault(){
+ const I=S.items,q=F.q.toLowerCase();
+ $('#cats').innerHTML=['All',...Object.keys(CATS)].map(c=>`<button class="${F.cat===c?'on':''}" data-c="${c}">${c==='All'?'':ico(c)}${c.toUpperCase()} <em>${c==='All'?I.length:I.filter(i=>i.cat===c).length}</em></button>`).join('');
+ const L=I.filter(i=>(F.cat==='All'||i.cat===F.cat)&&(!F.cls||i.cls===F.cls)&&(!F.rar||i.rar===F.rar)&&(!F.equ||(F.equ==='eq')===(fitted(i.id).length>0))&&(!q||[i.name,i.mfr,i.loc,i.notes,i.sub,i.size].join(' ').toLowerCase().includes(q)));
+ const CK=Object.keys(CATS),CI=c=>{const k=CK.indexOf(c);return k<0?99:k},SI=i=>{const k=(CATS[i.cat]||[]).indexOf(i.sub);return k<0?99:k};
+ L.sort((a,b)=>F.sort==='cat'?CI(a.cat)-CI(b.cat)||SI(a)-SI(b)||String(a.sub).localeCompare(b.sub)||RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='rar'?RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='qty'?b.qty-a.qty:F.sort==='new'?(b.t||0)-(a.t||0):a.name.localeCompare(b.name));
+ const gh=F.sort==='cat'&&F.cat==='All'?(()=>{let last,o='';L.forEach(i=>{if(i.cat!==last){last=i.cat;o+=`<div class="gh">${ico(i.cat)}<span>${esc(i.cat.toUpperCase())}</span><em>${L.filter(x=>x.cat===i.cat).length}</em></div>`}o+=card(i)});return o})():null;
+ $('#grid').innerHTML=L.length?(gh||L.map(card).join('')):I.length?'<div class="empty">No items match these filters.</div>':'<div class="empty"><h3 class="orb">VAULT EMPTY</h3>Log your first rare drop, or load a few sample entries to see how it works.<br><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="sample">LOAD SAMPLE DATA</button></div>';
+}
+function builds(){
+ $('#blist').innerHTML=S.builds.length?S.builds.map(b=>{const m=missing(b);return `<div class="bcard"><div class="bh"><h3>${esc(b.name)}</h3>${b.cls?`<span class="chip">${esc(b.cls)}</span>`:''}<span class="orb ${m?'miss':'ok'}">${m?m+' TO BUY':'READY'}</span><button data-act="editBuild" data-id="${b.id}">EDIT</button></div>${b.slots.map(s=>{const h=have(b,s),o=own(b,s),ok=h>=s.qty;return `<div class="slot"><b class="${ok?'ok':'miss'}">${ok?'✓':'✗'}</b><div>${esc(s.sub)} ${esc(s.size)} ×${s.qty}<small>${o.map(i=>esc(i.name)+' ×'+i.qty).join(', ')||'nothing owned yet'}</small></div><span class="orb ${ok?'ok':'miss'}">${ok?'OK':'BUY '+(s.qty-h)}</span></div>`}).join('')}</div>`}).join(''):'<div class="empty"><h3 class="orb">NO BUILDS YET</h3>Create a build (for example a stealth ship) and list the slots it needs.</div>';
+}
+function editItem(id){
+ const f=id&&S.items.find(i=>i.id===id);cur=f?{...f}:{cat:'Components',sub:'Power Plant',rar:'Rare',qty:1};isNew=!f;const it=cur;
+ $('#box').innerHTML=`<h2>${f?'EDIT ITEM':'NEW ITEM'}</h2><div class="fm"><label class="w">NAME<span style="display:flex;gap:6px"><input id="f_name" style="flex:1" placeholder="Type a name, then LOOK UP" value="${esc(it.name)}"><button data-act="fill">LOOK UP</button><button data-act="wiki" title="Search starcitizen.tools">WIKI ↗</button></span></label><div class="w dim" id="fmsg"></div><label>CATEGORY<select id="f_cat">${opts(Object.keys(CATS),it.cat)}</select></label><label>TYPE<select id="f_sub"></select></label><label>MANUFACTURER<input id="f_mfr" value="${esc(it.mfr)}"></label><label>SIZE<input id="f_size" placeholder="S1, S2, S3…" value="${esc(it.size)}"></label><label>GRADE<select id="f_grade">${opts(['','A','B','C','D'],it.grade||'')}</select></label><label>CLASS<select id="f_cls">${opts(['',...CLS],it.cls||'')}</select></label><label>RARITY<select id="f_rar">${opts(RAR,it.rar)}</select></label><label>QUANTITY<input id="f_qty" type="number" min="0" value="${it.qty==null?1:it.qty}"></label><label class="w">STORED AT<input id="f_loc" placeholder="Hangar, ship, station…" value="${esc(it.loc)}"></label><label class="w">NOTES<textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label></div><div class="row">${f?'<button class="danger" data-act="del">DELETE</button>':''}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="save">SAVE</button></div>`;
+ const sub=()=>{const L=CATS[$('#f_cat').value].slice();if(it.sub&&!L.includes(it.sub))L.push(it.sub);$('#f_sub').innerHTML=opts(L,it.sub)};sub();$('#f_cat').onchange=sub;openM();
+}
+function grab(){cb.name=$('#b_name').value;cb.cls=$('#b_cls').value}
+function editBuild(id){
+ cb=id?JSON.parse(JSON.stringify(S.builds.find(x=>x.id===id))):{name:'',cls:'',slots:[{sub:'Power Plant',size:'',qty:1}]};cbNew=!id;bform();openM();
+}
+function bform(){
+ const b=cb;
+ $('#box').innerHTML=`<h2>${cbNew?'NEW BUILD':'EDIT BUILD'}</h2><div class="fm"><label>BUILD NAME<input id="b_name" placeholder="Stealth ship" value="${esc(b.name)}"></label><label>REQUIRED CLASS<select id="b_cls">${opts(['',...CLS],b.cls||'')}</select></label></div><p class="dim">Slots to fill. Your vault is matched by type, size and class (leave size empty for any).</p>${b.slots.map((s,i)=>`<div class="srow"><select data-s="${i}" data-k="sub">${opts(SLOTSUBS,s.sub)}</select><input data-s="${i}" data-k="size" placeholder="Size" value="${esc(s.size)}"><input data-s="${i}" data-k="qty" type="number" min="1" value="${s.qty}"><button data-act="rmslot" data-i="${i}">✕</button></div>`).join('')}<button data-act="addslot">+ SLOT</button><div class="row">${cbNew?'':'<button class="danger" data-act="delBuild">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveBuild">SAVE</button></div>`;
+}
+const say=(t,err)=>{const m=$('#msg');if(m){m.textContent=t;m.className=err?'err':''}};
+let PICKS=[];
+async function search(q){if(q.trim().length<2)throw'Type at least 2 characters.';return await WIKI.items(q)}
+const desc=d=>[d.sub,d.size,d.grade&&'Grade '+d.grade,d.cls,d.mfr].filter(Boolean).join(' · ');
+const picker=(r,act)=>'Several matches, pick one:<div class="picks">'+r.map((d,i)=>`<button data-act="${act}" data-i="${i}">${esc(d.name)} <small>${esc(desc(d))}</small></button>`).join('')+'</div>';
+function addFound(d){
+ const ex=S.items.find(i=>i.slug?i.slug===d.slug:i.name.toLowerCase()===d.name.toLowerCase());
+ if(ex)ex.qty=(+ex.qty||0)+1;else S.items.push({id:uid(),t:Date.now(),name:d.name,cat:d.cat,sub:d.sub,mfr:d.mfr,size:d.size,grade:d.grade,cls:d.cls,rar:d.rar,qty:1,loc:'',notes:'',src:'wiki',slug:d.slug,craft:d.craft});
+ $('#qa').value='';persist();say((ex?'Quantity +1: ':'Added: ')+d.name+' · '+desc(d)+' · from the Star Citizen Wiki');
+}
+async function quick(){
+ const n=$('#qa').value.trim();if(!n)return;const b=$('#qab');b.disabled=true;say('Looking it up on the Star Citizen Wiki…');
+ try{const r=await search(n);
+  if(!r.length)return say('Nothing found for “'+n+'”. Check the spelling, or use + ADD ITEM to enter it by hand.',1);
+  const ex=r.filter(d=>d.name.toLowerCase()===n.toLowerCase());
+  if(r.length===1||ex.length===1)return addFound(ex[0]||r[0]);
+  PICKS=r;const m=$('#msg');m.className='';m.innerHTML=picker(r,'pick');
+ }catch(e){say(String(e.message||e),1)}finally{b.disabled=false}
+}
+function applyForm(d){
+ cur.src='wiki';cur.slug=d.slug;cur.craft=d.craft;cur.sub=d.sub;const set=(k,v)=>{$('#f_'+k).value=v};
+ set('name',d.name);set('cat',d.cat);$('#f_cat').onchange();set('sub',d.sub);set('mfr',d.mfr);set('size',d.size);set('grade',d.grade);set('cls',d.cls);set('rar',d.rar);
+ $('#fmsg').textContent='Filled in from the Star Citizen Wiki. Rarity is only a default, set it to match your item.';
+}
+async function fillForm(el){
+ const n=$('#f_name').value.trim(),m=$('#fmsg');if(!n)return $('#f_name').focus();el.disabled=true;m.textContent='Looking it up…';
+ try{const r=await search(n);if(!m.isConnected)return;
+  if(!r.length){m.textContent='Nothing found. Check the spelling or fill the fields in by hand.';return}
+  const ex=r.filter(d=>d.name.toLowerCase()===n.toLowerCase());
+  if(r.length===1||ex.length===1)return applyForm(ex[0]||r[0]);
+  PICKS=r;m.innerHTML=picker(r,'fpick');
+ }catch(e){if(m.isConnected)m.textContent=String(e.message||e)}finally{el.disabled=false}
+}
+const SLOTT=['Shield','Ship Armor','Cooler','Power Plant','Quantum Drive','Jump Drive','Radar','Life Support','Flight Controller','Countermeasure','Gun','Turret','Mining Laser','Missile Rack'],EQ=new Set([...SLOTT,'Mining Laser']);
+const CATOF=t=>['Gun','Turret','Missile Rack','Mining Laser','Countermeasure'].includes(t)?'Ship Weapons':'Components',shipName=h=>h.nick||h.name;
+const fitted=id=>{const L=[];S.ships.forEach(h=>(h.slots||[]).forEach(s=>{if(s.item===id)L.push({h,s})}));return L};
+function fitTag(i){const f=fitted(i.id);if(f.length){const nm=[...new Set(f.map(x=>shipName(x.h)))],over=f.length>(+i.qty||0);return `<span class="${over?'warn':'eq'}" title="${esc(nm.join(', '))}${over?' (more fitted than you own)':''}">${over?'⚠':'⚙'} ${esc(nm[0])}${f.length>1?' ×'+f.length:''}</span>`}return EQ.has(i.sub)?'<span class="spare">spare</span>':''}
+const sayS=(t,err)=>{const m=$('#smsg');if(m){m.textContent=t;m.className=err?'err':''}};
+async function api(p){const u=new URL(p,'http://x'),q=(u.searchParams.get('q')||u.searchParams.get('slug')||'').trim();if(q.length<2)throw'Type at least 2 characters.';
+ if(u.pathname==='/api/ships')return{results:await WIKI.ships(q)};if(u.pathname==='/api/ship')return{ship:await WIKI.ship(q)};throw'Lookup failed.'}
+let SP=[],cs,csNew,PK;
+const GT={'Shield':'SHIELDS','Ship Armor':'ARMOR','Cooler':'COOLERS','Power Plant':'POWER PLANTS','Quantum Drive':'QUANTUM DRIVES','Jump Drive':'JUMP DRIVES','Radar':'RADAR','Life Support':'LIFE SUPPORT','Flight Controller':'FLIGHT CONTROLLER','Countermeasure':'COUNTERMEASURES','Gun':'WEAPONS','Turret':'TURRETS & GIMBALS','Mining Laser':'MINING LASERS','Missile Rack':'MISSILE RACKS'},OPEN={},SV=3;
+function slotRow(h,s){
+ const it=S.items.find(i=>i.id===s.item),st=s.stock,lab=s.label||s.type;
+ const what=it?`<i>${esc(it.name)}${it.size&&s.size&&it.size!==s.size?'<small class="mm" title="This part is '+esc(it.size)+' but the slot is '+esc(s.size)+'">SIZE</small>':''}</i>`:st&&st.name?`<i class="st" title="Default part that comes with the ship"><span>${esc(st.name)}</span><small>STOCK</small></i>`:'<i>empty</i>';
+ return `<button class="slotb${it?' on':''}" data-act="slot" data-h="${h.id}" data-s="${s.id}" style="--r:${it?RC[it.rar]||'#3cc8ff':'var(--line)'}" title="${esc(lab)}">${ico(CATOF(s.type))}<b>${esc(s.size||'–')}</b><span class="sl">${esc(lab)}</span>${what}</button>`}
+function slotGroups(h){
+ const sl=h.slots||[];if(!sl.length)return '<div class="m">No slots yet. Press EDIT SHIP and add some.</div>';
+ const kinds=[...Object.keys(GT),...[...new Set(sl.map(s=>s.type))].filter(t=>!GT[t])];
+ return kinds.map(t=>{const L=sl.filter(s=>s.type===t);if(!L.length)return '';const k=h.id+':'+t,n=L.filter(s=>s.item).length,open=OPEN[k]!==undefined?OPEN[k]:L.length<=4;
+  return `<details class="grp" data-k="${k}"${open?' open':''}><summary><span>${esc(GT[t]||t.toUpperCase())}</span><em>${L.length}${n?' · '+n+' yours':''}</em></summary>${L.map(s=>slotRow(h,s)).join('')}</details>`}).join('')}
+const RP=[[500,'Legendary'],[250,'Very Rare'],[100,'Rare'],[1,'Uncommon']];
+const rarFromPrice=p=>{p=+p;if(!(p>0))return '';for(const[m,r]of RP)if(p>=m)return r;return ''};
+const SRAR=[...RAR,'Mythic'];
+const MYTHIC=/wikelo|pyam|\bexec(utive)?\b/i;
+const shipRar=h=>h.rarOv||(MYTHIC.test(h.name||'')?'Mythic':rarFromPrice(h.msrp)),shipCol=h=>RC[shipRar(h)]||'#7d9bb0';
+const CHIPS=[['Shield','Shields'],['Power Plant','Power'],['Cooler','Coolers'],['Quantum Drive','QD'],['Gun','Guns'],['Turret','Turrets'],['Missile Rack','Racks']];
+const isOpen=h=>!!OPEN['s:'+h.id];
+function shipCard(h){
+ const sl=h.slots||[],fl=sl.filter(s=>s.item).length,r=shipRar(h),op=isOpen(h),nm=shipName(h);
+ const sum=CHIPS.map(([t,l])=>{const L=sl.filter(s=>s.type===t);if(!L.length)return '';const f=L.filter(s=>s.item).length,z=[...new Set(L.map(s=>s.size).filter(Boolean))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));return `<span class="${f?'on':''}" title="${L.length} slot${L.length>1?'s':''}${f?', '+f+' fitted from your vault':''}">${l}<b>${esc(z.join(' / ')||'–')}</b></span>`}).join('')+(+h.cargo>0?`<span>Cargo<b>${+h.cargo} SCU</b></span>`:'');
+ return `<article class="scard" style="--r:${shipCol(h)}"><div class="sh" data-act="toggleShip" data-id="${h.id}"><div class="ic">${ico('Ships')}</div><div><h3>${esc(nm)}</h3><div class="m">${esc([h.nick&&h.name,h.mfr,h.role,h.size&&'Size '+h.size].filter(Boolean).join(' · '))}</div></div><div class="rt"><span class="chip">${esc(r||'Unpriced')}</span>${h.msrp?`<span class="px">$${(+h.msrp).toLocaleString('en-US')}</span>`:''}</div></div><div class="sum">${sum}</div><div class="bar2"><span style="width:${sl.length?fl/sl.length*100:0}%"></span></div><div class="m">${sl.length} slots · ${fl} fitted from your vault, the rest stock${h.loc?' · ▸ '+esc(h.loc):''}</div>${h.notes?`<div class="m">${esc(h.notes)}</div>`:''}<div class="sbtns"><button class="tg" data-act="toggleShip" data-id="${h.id}">${op?'▴ HIDE COMPONENTS':'▾ COMPONENTS'}</button><button data-act="editShip" data-id="${h.id}">EDIT SHIP</button></div>${op?`<div class="comp"><div class="slots">${slotGroups(h)}</div>${h.slug?`<div class="sbtns"><button data-act="refreshShip" data-id="${h.id}" title="Re-read the default loadout and price from the wiki">↻ REFRESH SLOTS</button></div>`:''}</div>`:''}</article>`}
+function fleet(){
+ const k=($('#fsh')||{}).value||'rar',R=h=>SRAR.indexOf(shipRar(h)),A=[...S.ships];
+ A.sort((a,b)=>k==='price'?(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)):k==='name'?shipName(a).localeCompare(shipName(b)):k==='size'?(+b.size||0)-(+a.size||0)||shipName(a).localeCompare(shipName(b)):k==='new'?(b.t||0)-(a.t||0):R(b)-R(a)||(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)));
+ $('#fcount').textContent=S.ships.length?S.ships.length+' ship'+(S.ships.length>1?'s':'')+' · '+S.ships.reduce((n,h)=>n+(h.slots||[]).filter(s=>s.item).length,0)+' parts fitted from your vault':'';
+ $('#sgrid').innerHTML=A.length?A.map(shipCard).join(''):'<div class="empty"><h3 class="orb">HANGAR EMPTY</h3>Type a ship name above to add it from the Star Citizen Wiki, or use + MANUAL.</div>'}
+async function quickShip(){
+ const n=$('#sq').value.trim();if(!n)return;const b=$('#sqb');b.disabled=true;sayS('Looking up the ship on the Star Citizen Wiki…');
+ try{const r=(await api('/api/ships?q='+encodeURIComponent(n))).results||[];
+  if(!r.length)return sayS('No ship found for “'+n+'”. Check the spelling, or use + MANUAL.',1);
+  const ex=r.filter(d=>d.name.toLowerCase()===n.toLowerCase());
+  if(r.length===1||ex.length===1)return await addShip(ex[0]||r[0]);
+  SP=r.map(d=>({...d,desc:undefined}));const m=$('#smsg');m.className='';m.innerHTML=picker(r.map(d=>({...d,cat:'',grade:'',cls:'',size:[d.size,d.msrp&&'$'+d.msrp].filter(Boolean).join(' · ')})),'shippick');
+ }catch(e){sayS(String(e.message||e),1)}finally{b.disabled=false}
+}
+async function addShip(d){
+ try{sayS('Loading '+d.name+' hardpoints…');const t=(await api('/api/ship?slug='+encodeURIComponent(d.slug))).ship;
+  const slots=mkSlots(t.slots);
+  S.ships.push({id:uid(),t:Date.now(),name:t.name,nick:'',slug:t.slug,mfr:t.mfr,role:t.role,size:t.size,cargo:t.cargo,msrp:t.msrp||null,loc:'',notes:'',src:'wiki',sv:SV,slots});
+  $('#sq').value='';persist();sayS('Added '+t.name+(slots.length?' with '+slots.length+' slots filled with the ship\u2019s default loadout from the wiki. Tap a slot to fit something from your vault.':'. The wiki had no hardpoint data for it, so press EDIT SHIP to add slots by hand.'));
+ }catch(e){sayS(String(e.message||e),1)}
+}
+const mkSlots=a=>(a||[]).map((x,i)=>({id:uid()+i,type:x.type,size:x.size,label:x.label,item:null,stock:x.stock||null,note:x.note||''}));
+async function refreshShip(id,quiet){
+ const h=S.ships.find(x=>x.id===id);if(!h||!h.slug)return false;
+ try{
+  const t=(await api('/api/ship?slug='+encodeURIComponent(h.slug))).ship,fresh=mkSlots(t.slots);
+  if(!fresh.length){if(!quiet)sayS('The wiki has no hardpoint data for '+h.name+', so its slots were left as they are.',1);return false}
+  let lost=0;
+  (h.slots||[]).filter(s=>s.item).forEach(o=>{const m=fresh.find(f=>!f.item&&f.type===o.type&&f.size===o.size)||fresh.find(f=>!f.item&&f.type===o.type);if(m)m.item=o.item;else lost++});
+  h.slots=fresh;h.sv=SV;if(t.msrp)h.msrp=t.msrp;persist();
+  if(!quiet)sayS(h.name+' refreshed: '+fresh.length+' slots with the wiki default loadout'+(lost?' ('+lost+' fitted part'+(lost>1?'s':'')+' had no matching slot and '+(lost>1?'were':'was')+' unequipped)':'')+'.');
+  return true
+ }catch(e){if(!quiet)sayS(String(e.message||e),1);return false}
+}
+async function migrateShips(){
+ const old=S.ships.filter(h=>h.src==='wiki'&&h.slug&&h.sv!==SV);if(!old.length)return;
+ sayS('Updating '+old.length+' ship'+(old.length>1?'s':'')+' (adding pledge prices)…');
+ let n=0;for(const h of old)if(await refreshShip(h.id,true))n++;
+ sayS(n?'Updated '+n+' ship'+(n>1?'s':'')+' with pledge prices.':'Could not update the old ship slots (is the wiki reachable?). They will be retried next time you open the vault.',!n)
+}
+function grabS(){cs.msrp=+$('#sh_px').value||null;cs.rarOv=$('#sh_rar').value;cs.name=$('#sh_name').value;cs.nick=$('#sh_nick').value;cs.loc=$('#sh_loc').value;cs.notes=$('#sh_notes').value}
+function editShip(id){const f=id&&S.ships.find(x=>x.id===id);cs=f?JSON.parse(JSON.stringify(f)):{name:'',nick:'',mfr:'',role:'',size:'',loc:'',notes:'',slots:[]};csNew=!f;sform();openM()}
+function sform(){const h=cs;
+ $('#box').innerHTML=`<h2>${csNew?'NEW SHIP':'EDIT SHIP'}</h2><div class="fm"><label>SHIP MODEL<input id="sh_name" value="${esc(h.name)}"></label><label>YOUR NAME FOR IT<input id="sh_nick" placeholder="optional" value="${esc(h.nick)}"></label><label>LOCATION<input id="sh_loc" placeholder="Where it is parked" value="${esc(h.loc)}"></label><label>NOTES<input id="sh_notes" value="${esc(h.notes)}"></label><label>PLEDGE PRICE (USD)<input id="sh_px" type="number" min="0" placeholder="from the wiki" value="${esc(h.msrp||'')}"></label><label>RARITY<select id="sh_rar"><option value="">Auto (from price)</option>${opts(SRAR,h.rarOv||'')}</select></label></div><p class="dim">Component slots. Fix anything the wiki got wrong, or add your own.</p>${h.slots.map((s,i)=>`<div class="srow2"><select data-ss="${i}" data-sk="type">${opts(SLOTT,s.type)}</select><input data-ss="${i}" data-sk="size" placeholder="Size" value="${esc(s.size)}"><input data-ss="${i}" data-sk="label" placeholder="Label" value="${esc(s.label)}"><button data-act="rmSlotS" data-i="${i}">✕</button></div>`).join('')}<button data-act="addSlotS">+ SLOT</button><div class="row">${csNew?'':'<button class="danger" data-act="delShip">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveShip">SAVE</button></div>`}
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.sk)cs.slots[t.dataset.ss][t.dataset.sk]=t.value});
+function openPicker(hid,sid){
+ const h=S.ships.find(x=>x.id===hid),s=h&&h.slots.find(x=>x.id===sid);if(!s)return;PK={h:hid,s:sid};
+ const c=S.items.filter(i=>i.sub===s.type).sort((a,b)=>(b.size===s.size)-(a.size===s.size)||RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)),cur=S.items.find(i=>i.id===s.item);
+ const rows=c.map(i=>{const f=fitted(i.id),free=(+i.qty||0)-f.length,here=i.id===s.item,where=[...new Set(f.filter(x=>x.s!==s).map(x=>shipName(x.h)))].join(', ');
+  return `<div class="prow${here?' here':''}"><div><b>${esc(i.name)}</b><small>${esc([i.size,i.grade&&'Grade '+i.grade,i.cls,i.mfr].filter(Boolean).join(' · '))}${i.size&&s.size&&i.size!==s.size?' · size mismatch':''}</small><small>${here?'fitted here':free>0?free+' spare':'none spare'}${where?' · on '+esc(where):''}</small></div>${here?'<span class="orb ok">FITTED</span>':`<button data-act="equip" data-i="${i.id}">${free>0?'FIT':'MOVE HERE'}</button>`}</div>`}).join('');
+ const st=s.stock,hasSt=!!(st&&st.name),stl=hasSt?`<p class="dim">Stock part: <b>${esc(st.name)}</b>${[st.size,st.grade&&'Grade '+st.grade,st.cls,st.mfr].filter(Boolean).map(x=>' · '+esc(x)).join('')}</p>`:'',nt=s.note?`<p class="dim">Holds: ${esc(s.note)}</p>`:'';
+ $('#box').innerHTML=`<h2>${esc(s.type)} ${esc(s.size)} · ${esc(shipName(h))}</h2><p class="dim">${esc(s.label||'')}${cur?' · fitted: '+esc(cur.name):hasSt?' · running the stock part':' · empty slot'}</p>${stl}${nt}${cur?`<button class="danger" data-act="unequip">${hasSt?'RESTORE STOCK PART':'UNEQUIP'}</button>`:''}<div style="margin-top:8px">${rows||'<div class="dim">You have no '+esc(s.type)+' in your vault yet. Add one on the Vault tab first.</div>'}</div><div class="row"><span></span><button data-act="close">CLOSE</button></div>`;openM()}
+function equip(id){const h=S.ships.find(x=>x.id===PK.h),s=h&&h.slots.find(x=>x.id===PK.s),it=S.items.find(i=>i.id===id);if(!s||!it)return;const f=fitted(id);if(f.length>=(+it.qty||0)){const o=f.find(x=>x.s!==s);if(o)o.s.item=null}s.item=id;closeM();persist()}
+const two=(el,fn,t)=>{if(el.dataset.s)fn();else{el.dataset.s=1;el.textContent=t||'CONFIRM?'}};
+const acts={
+ add:()=>editItem(),close:closeM,sync:()=>showSync(),
+ syJoin(){const v=$('#sy_code').value.trim();if(!v)return $('#sy_code').focus();return syGo(v)},
+ syNew(){const v=$('#sy_url').value.trim();if(!v)return $('#sy_url').focus();return syGo(v)},
+ syNow(){SYNC.now();showSync('Syncing…')},
+ syOff(d,el){two(el,()=>{SYNC.disconnect();SY=SYNC.status();syncDot();showSync('Disconnected. Your vault in this browser is unchanged.')},'CLICK AGAIN TO DISCONNECT')},
+ copySync(){const t=$('#sy_out');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){document.execCommand('copy')}$('#symsg').textContent='Code copied.'},
+quick:()=>quick(),quickShip:()=>quickShip(),toggleShip:d=>{OPEN['s:'+d.id]=!OPEN['s:'+d.id];fleet()},newShip:()=>editShip(),editShip:d=>editShip(d.id),shippick:d=>addShip(SP[+d.i]),slot:d=>openPicker(d.h,d.s),equip:d=>equip(d.i),refreshShip:d=>refreshShip(d.id),
+ unequip(){const h=S.ships.find(x=>x.id===PK.h),s=h&&h.slots.find(x=>x.id===PK.s);if(s)s.item=null;closeM();persist()},
+ addSlotS(){grabS();cs.slots.push({id:uid(),type:'Shield',size:'',label:'',item:null});sform()},
+ rmSlotS(d){grabS();cs.slots.splice(+d.i,1);sform()},
+ saveShip(){grabS();if(!cs.name.trim())return $('#sh_name').focus();cs.name=cs.name.trim();if(csNew){cs.id=uid();cs.t=Date.now();cs.src='manual';S.ships.push(cs)}else{const k=S.ships.findIndex(x=>x.id===cs.id);if(k>=0)S.ships[k]=cs}closeM();persist()},
+ delShip(d,el){two(el,()=>{S.ships=S.ships.filter(x=>x.id!==cs.id);closeM();persist()})},
+ fill:(d,el)=>fillForm(el),pick:d=>addFound(PICKS[+d.i]),fpick:d=>applyForm(PICKS[+d.i]),wiki(){window.open('https://starcitizen.tools/index.php?search='+encodeURIComponent($('#f_name').value)+'&title=Special%3ASearch&go=Go','_blank','noopener')},
+ save(){const g=k=>$('#f_'+k).value.trim();if(!g('name'))return $('#f_name').focus();
+  Object.assign(cur,{name:g('name'),cat:g('cat'),sub:g('sub'),mfr:g('mfr'),size:g('size'),grade:g('grade'),cls:g('cls'),rar:g('rar'),qty:Math.max(0,+g('qty')||0),loc:g('loc'),notes:g('notes')});
+  if(isNew){cur.id=uid();cur.t=Date.now();S.items.push(cur)}else{const k=S.items.findIndex(x=>x.id===cur.id);if(k>=0)S.items[k]=cur}closeM();persist()},
+ del(d,el){two(el,()=>{S.items=S.items.filter(x=>x.id!==cur.id);closeM();persist()})},
+ newBuild:()=>editBuild(),editBuild:d=>editBuild(d.id),
+ addslot(){grab();cb.slots.push({sub:'Cooler',size:'',qty:1});bform()},
+ rmslot(d){grab();cb.slots.splice(+d.i,1);bform()},
+ saveBuild(){grab();if(!cb.name.trim())return $('#b_name').focus();cb.name=cb.name.trim();if(cbNew){cb.id=uid();S.builds.push(cb)}else{const k=S.builds.findIndex(x=>x.id===cb.id);if(k>=0)S.builds[k]=cb}closeM();persist()},
+ delBuild(d,el){two(el,()=>{S.builds=S.builds.filter(x=>x.id!==cb.id);closeM();persist()})},
+ data(){$('#box').innerHTML=`<h2>DATA</h2><p class="dim">Your vault saves automatically. Copy this text as a backup, or paste a backup here and import it.</p><textarea id="dt" rows="8" style="width:100%">${esc(JSON.stringify(S))}</textarea><div class="row"><button class="danger" data-act="reset">RESET ALL</button><span></span><button data-act="close">CLOSE</button><button class="pri" data-act="imp">IMPORT</button></div>`;openM()},
+ imp(){try{const p=JSON.parse($('#dt').value);if(!Array.isArray(p.items))throw 0;S=p;closeM();persist()}catch(e){$('#box h2').textContent='DATA // INVALID BACKUP TEXT'}},
+ reset(d,el){two(el,()=>{S={items:[],builds:[]};closeM();persist()},SY&&SY.on?'ERASES FOR BOTH. CLICK AGAIN':'CLICK AGAIN TO ERASE')},
+ sample(){const t=Date.now(),m=(n,c,s,sz,g,cl,r,q,l)=>({id:uid(),t,name:n,cat:c,sub:s,size:sz,grade:g,cls:cl,rar:r,qty:q,loc:l});
+  S.items.push(m('Example Stealth Power Plant','Components','Power Plant','S2','A','Stealth','Very Rare',1,'Hangar'),m('Example Stealth Cooler','Components','Cooler','S2','A','Stealth','Rare',2,'Hangar'),m('Example Stealth Shield','Components','Shield','S2','B','Stealth','Rare',1,'Hangar'),m('Example Military Quantum Drive','Components','Quantum Drive','S2','A','Military','Rare',1,'Ship'),m('Example Rare Rifle','FPS Weapons','Rifle','','','','Legendary',1,'Locker'),m('Example Armor Core','Armor','Core','','','','Very Rare',1,'Locker'),m('Example Ship Variant','Ships','Variant','','','','Legendary',1,'Account'));
+  S.builds.push({id:uid(),name:'Example Stealth Build',cls:'Stealth',slots:[{sub:'Power Plant',size:'S2',qty:1},{sub:'Cooler',size:'S2',qty:2},{sub:'Shield',size:'S2',qty:2},{sub:'Quantum Drive',size:'S2',qty:1}]});persist()}
+};
+document.addEventListener('click',e=>{
+ const g=s=>e.target.closest(s);let el;
+ if(e.target.id==='modal')closeM();
+ else if(el=g('[data-t]')){tab=el.dataset.t;render()}
+ else if(el=g('[data-c]')){F.cat=el.dataset.c;render()}
+ else if(el=g('[data-q]')){const i=S.items.find(x=>x.id===g('.card').dataset.id);if(i){i.qty=Math.max(0,(+i.qty||0)+ +el.dataset.q);persist()}}
+ else if(el=g('[data-act]'))acts[el.dataset.act](el.dataset,el);
+ else if(el=g('.card'))editItem(el.dataset.id);
+});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.k)cb.slots[t.dataset.s][t.dataset.k]=t.dataset.k==='qty'?Math.max(1,+t.value||1):t.value});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();if(e.key==='Enter'){if(e.target.id==='qa')quick();else if(e.target.id==='sq')quickShip();else if(e.target.id==='f_name'){e.preventDefault();fillForm(document.querySelector('[data-act=fill]'))}}});
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.classList&&d.classList.contains('grp'))OPEN[d.dataset.k]=d.open},true);
+$('#fcls').innerHTML='<option value="">All classes</option>'+opts(CLS);$('#frar').innerHTML='<option value="">All rarities</option>'+opts(RAR);
+$('#q').oninput=e=>{F.q=e.target.value;vault()};$('#fcls').onchange=e=>{F.cls=e.target.value;vault()};$('#frar').onchange=e=>{F.rar=e.target.value;vault()};$('#fsort').onchange=e=>{F.sort=e.target.value;vault()};$('#fsh').onchange=()=>fleet();$('#fequ').onchange=e=>{F.equ=e.target.value;vault()};
+render();
+// ---- Star Citizen Wiki lookups, straight from the browser (port of the old local helper) ----
+const WIKI=(()=>{
+const BASE='https://api.star-citizen.wiki/api',TTL=7*864e5,CK='scv_lookup_cache';
+const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const TYPES={Shield:['Components','Shield'],Cooler:['Components','Cooler'],PowerPlant:['Components','Power Plant'],QuantumDrive:['Components','Quantum Drive'],JumpDrive:['Components','Jump Drive'],Radar:['Components','Radar'],FlightController:['Components','Flight Controller'],ShieldController:['Components','Shield Controller'],WeaponGun:['Ship Weapons','Gun'],Turret:['Ship Weapons','Turret'],WeaponMining:['Ship Weapons','Mining Laser'],WeaponDefensive:['Ship Weapons','Countermeasure'],MissileLauncher:['Ship Weapons','Missile Rack'],Missile:['Missiles','Missile'],Bomb:['Missiles','Bomb'],Paints:['Ships','Livery'],LifeSupportGenerator:['Components','Life Support']};
+const FPS_SUB={'sniper rifle':'Sniper','assault rifle':'Rifle','rifle':'Rifle','submachine gun':'SMG','smg':'SMG','pistol':'Pistol','shotgun':'Shotgun','light machine gun':'LMG','lmg':'LMG','launcher':'Launcher','rocket launcher':'Launcher'};
+const GR=['A','B','C','D'];
+const str=v=>v==null?'':String(v);
+const mfrOf=o=>str(o&&o.manufacturer&&o.manufacturer.name);
+function classify(it){
+ const typ=str(it.type),cl=str(it.classification);let sub=str(it.sub_type_label);
+ if(sub.toLowerCase()==='undefined')sub='';
+ const low=(typ+' '+cl+' '+sub).toLowerCase();
+ if(typ==='Armor'&&cl.startsWith('Ship'))return['Components','Ship Armor'];
+ if(has(TYPES,typ)){let[c,s]=TYPES[typ];if(typ==='Missile'&&(sub+' '+str(it.name)).toLowerCase().includes('torpedo'))s='Torpedo';return[c,s]}
+ if(typ==='WeaponPersonal')return['FPS Weapons',(has(FPS_SUB,sub.toLowerCase())?FPS_SUB[sub.toLowerCase()]:'')||sub||'Other'];
+ if(!cl.startsWith('Ship')&&/armor|helmet|undersuit|backpack|torso/.test(low)){
+  for(const[pat,s]of[[/helmet/,'Helmet'],[/undersuit/,'Undersuit'],[/backpack/,'Backpack'],[/torso|core|chest/,'Core'],[/(^|[^a-z])legs?($|[^a-z])/,'Legs'],[/(^|[^a-z])arms?($|[^a-z])/,'Arms']])if(pat.test(low))return['Armor',s];
+  return['Armor','Core']}
+ return['Other',str(it.type_label)||'Misc']}
+function rarity(it,grade){
+ const r=str(it.rarity).toLowerCase();
+ if(r.includes('legend'))return'Legendary';
+ if(r.includes('epic')||r.includes('very'))return'Very Rare';
+ if(r.includes('rare'))return'Rare';
+ if(r==='uncommon'||r==='common')return'Uncommon';
+ return({A:'Very Rare',B:'Rare'})[grade]||'Uncommon'}
+const toInt=v=>{if(typeof v==='number'&&isFinite(v))return Math.trunc(v);if(typeof v==='string'&&/^\s*[+-]?\d+\s*$/.test(v))return parseInt(v,10);return NaN};
+function norm(it){
+ const name=str(it.name).trim();if(!name||name.toUpperCase().includes('PLACEHOLDER'))return null;
+ const[cat,sub]=classify(it);let size='';
+ if(['Components','Ship Weapons','Missiles'].includes(cat)){const n=toInt(it.size);if(n>0)size='S'+n}
+ const grade=GR.includes(it.grade)?it.grade:'',cls=CLS.includes(it.class)?it.class:'';
+ return{name,cat,sub,mfr:mfrOf(it),size,grade,cls,rar:rarity(it,grade),slug:str(it.slug),craft:!!it.is_craftable,loot:!!it.is_lootable}}
+const rank=(name,key)=>{const n=name.toLowerCase();return n===key?0:n.startsWith(key)?1:2};
+const byRank=key=>(a,b)=>rank(a.name,key)-rank(b.name,key)||a.name.length-b.name.length;
+// ---- ships ----
+const SLOT_ORDER=['Shield','Ship Armor','Cooler','Power Plant','Quantum Drive','Jump Drive','Radar','Life Support','Flight Controller','Countermeasure','Gun','Turret','Mining Laser','Missile Rack'];
+const PTYPE={shield:'Shield',armor:'Ship Armor',cooler:'Cooler',powerplant:'Power Plant',quantumdrive:'Quantum Drive',jumpdrive:'Jump Drive',radar:'Radar',lifesupportgenerator:'Life Support',flightcontroller:'Flight Controller',weapondefensive:'Countermeasure',weapongun:'Gun',turret:'Turret',turretbase:'Turret',mannedturret:'Turret',weaponmining:'Mining Laser',missilelauncher:'Missile Rack',bomblauncher:'Missile Rack'};
+const NOTSLOT=/controller|blastshield|door|seat|screen|relay|thruster|fuel|self_?destruct|cargo|landing|dock|intake|ping|computer|battery|gravity|light|paint|interdict|ammo|display|sensor|mfd|attach/i;
+const GENERIC=/^(hardpoint_)?(class|weapon)_?\d*$/i;
+const lt=v=>str(v).toLowerCase().replace(/[^a-z]/g,'');
+const isObj=o=>o&&typeof o==='object'&&!Array.isArray(o);
+function kindOf(p,depth){
+ let t=lt(p.type);
+ if(!t&&!NOTSLOT.test(str(p.name))){for(const c of Array.isArray(p.compatible_types)?p.compatible_types:[]){const ct=lt(isObj(c)?c.type:c);if(has(PTYPE,ct)){t=ct;break}}}
+ const k=has(PTYPE,t)?PTYPE[t]:null;return(k==='Ship Armor'&&depth)?null:k}
+function portSize(p){
+ const it=isObj(p.equipped_item)?p.equipped_item:{},sz=isObj(p.sizes)?p.sizes.max:null;
+ for(const v of[sz,p.size,it.size]){const n=toInt(v);if(n>0)return'S'+n}return''}
+function slotLabel(trail){
+ const parts=[];
+ for(let n of trail){n=str(n);if(!n||GENERIC.test(n))continue;
+  n=n.replace(/^(hardpoint|joint)_/i,'').replace(/remoteturret/ig,'remote turret').replace(/lifesupport/ig,'life support').replace(/^controller_flight/i,'flight controller').replace(/[_\s]+/g,' ').trim();
+  if(n)parts.push(n[0].toUpperCase()+n.slice(1))}
+ return parts.join(' \u00b7 ')}
+function stockOf(p,kind){
+ const it=p.equipped_item;if(!isObj(it))return null;
+ let name=str(it.name).trim();
+ if(!name||name.toUpperCase().includes('PLACEHOLDER')){if(kind!=='Ship Armor')return null;name='Stock armor'}
+ return{name,mfr:mfrOf(it),grade:GR.includes(it.grade)?it.grade:'',cls:CLS.includes(it.class)?it.class:'',size:portSize({size:it.size})}}
+function contentsOf(kids){
+ const names=new Map();
+ for(const c of kids||[]){const n=str(isObj(c)&&c.equipped_item?c.equipped_item.name:'');if(n&&!n.toUpperCase().includes('PLACEHOLDER'))names.set(n,(names.get(n)||0)+1)}
+ return[...names].map(([n,c])=>c>1?c+'\u00d7 '+n:n).join(', ')}
+function natKey(label){return label.toLowerCase().split(/(\d+)/).map((x,i)=>i%2?parseInt(x,10):x)}
+function natCmp(a,b){for(let i=0;i<Math.min(a.length,b.length);i++){if(a[i]<b[i])return-1;if(a[i]>b[i])return 1}return a.length-b.length}
+function portsToSlots(ports){
+ const out=[];
+ (function walk(list,trail,depth){
+  for(const p of Array.isArray(list)?list:[]){
+   if(!isObj(p)||depth>6)continue;
+   const kind=kindOf(p,depth),here=[...trail,p.name],kids=Array.isArray(p.ports)?p.ports:[];
+   if(kind==='Turret'){
+    if(p.editable)out.push({type:kind,size:portSize(p),label:slotLabel(here)||kind,stock:stockOf(p,kind),note:''});
+    walk(kids,here,depth+1)}
+   else if(kind)out.push({type:kind,size:portSize(p),label:slotLabel(here)||kind,stock:stockOf(p,kind),note:kind==='Missile Rack'?contentsOf(kids):''})}
+ })(ports,[],0);
+ out.forEach(s=>s._k=natKey(s.label));
+ out.sort((a,b)=>SLOT_ORDER.indexOf(a.type)-SLOT_ORDER.indexOf(b.type)||natCmp(a._k,b._k));
+ out.forEach(s=>delete s._k);return out.slice(0,80)}
+const textOf=v=>{if(isObj(v))v=Object.values(v)[0];return str(v||'')};
+function usd(...vals){
+ for(let v of vals){
+  if(typeof v==='boolean')continue;
+  if(isObj(v))v=v.amount!==undefined?v.amount:(v.value!==undefined?v.value:v.usd);
+  const n=typeof v==='string'?parseFloat(v.replace(/[^0-9.]/g,'')):typeof v==='number'?v:NaN;
+  if(n>0)return Math.round(n)}
+ return null}
+function vbase(v){
+ let sc=v.size_class;if(typeof sc!=='number')sc=typeof v.size==='number'?v.size:null;
+ return{name:str(v.name).trim(),slug:str(v.slug||v.uuid),mfr:mfrOf(v),role:textOf(v.role||v.career),size:sc?String(Math.trunc(sc)):'',cargo:v.cargo_capacity===undefined?null:v.cargo_capacity,msrp:usd(v.msrp,v.pledge_price)}}
+// ---- network + cache ----
+const getCache=()=>{try{return JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){return{}}};
+function putCache(c){const now=Date.now();for(const k in c)if(now-c[k].t>TTL)delete c[k];
+ for(let i=0;i<4;i++){try{localStorage.setItem(CK,JSON.stringify(c));return}catch(e){const ks=Object.keys(c).sort((a,b)=>c[a].t-c[b].t);ks.slice(0,Math.ceil(ks.length/2)).forEach(k=>delete c[k])}}}
+async function cached(key,produce){
+ const c=getCache(),h=c[key];if(h&&Date.now()-h.t<TTL)return h.r;
+ const r=await produce();
+ if(r&&(!Array.isArray(r)||r.length)){const c2=getCache();c2[key]={t:Date.now(),r};putCache(c2)}
+ return r}
+async function getJson(path,params){
+ const url=BASE+path+(params?'?'+new URLSearchParams(params):'');
+ let r;try{r=await fetch(url,{headers:{Accept:'application/json'}})}
+ catch(e){throw'Could not reach the Star Citizen Wiki API. Check your internet connection and try again.'}
+ if(!r.ok)throw r.status===429?'Too many lookups, wait a minute.':'The Star Citizen Wiki API answered with error '+r.status+'.';
+ return r.json()}
+const rowsOf=raw=>Array.isArray(raw)?raw:(raw&&raw.data)||[];
+const api={
+ async items(q){q=q.trim();const key=q.toLowerCase();
+  return cached(key,async()=>{
+   const seen=new Set(),out=[];
+   for(const it of rowsOf(await getJson('/items',{'filter[name]':q,'page[size]':40}))){
+    const d=norm(it);if(!d)continue;const k=[d.name,d.cat,d.sub,d.size,d.grade,d.cls,d.mfr].join('\u0001');
+    if(seen.has(k))continue;seen.add(k);out.push(d)}
+   out.sort(byRank(key));return out.slice(0,12)})},
+ async ships(q){q=q.trim();const key=q.toLowerCase();
+  return cached('v2:'+key,async()=>{
+   const seen=new Set(),out=[];
+   for(const v of rowsOf(await getJson('/vehicles',{'filter[name]':q,'page[size]':20}))){
+    const b=vbase(v);if(!b.name||!b.slug||seen.has(b.name))continue;seen.add(b.name);
+    out.push({name:b.name,slug:b.slug,mfr:b.mfr,sub:b.role,size:b.size?'Size '+b.size:'',msrp:b.msrp})}
+   out.sort(byRank(key));return out.slice(0,12)})},
+ async ship(slug){
+  return cached('vd4:'+slug.toLowerCase(),async()=>{
+   const raw=await getJson('/vehicles/'+encodeURIComponent(slug),{include:'ports'});
+   const v=isObj(raw)&&raw.data!==undefined?raw.data:raw,b=vbase(isObj(v)?v:{});
+   b.slots=portsToSlots((v&&(v.ports||v.hardpoints))||[]);return b})}};
+return{...api,norm,portsToSlots,classify,usd,vbase};
+})();
+
+// ---- Shared vault (optional): merges this browser's vault with a Firebase Realtime Database "room" ----
+// Per-record, three-way merge (what I have / what the room has / what we both last agreed on), so two people
+// editing different things never overwrite each other and deletions travel too.
+const SYNC=(()=>{
+const SYK='scv_sync',BK='scv_syncbase',KINDS=['items','builds','ships'];
+const st={ok:null,err:'',last:0,seen:false,lrev:null,full:0,busy:false,again:false};
+let lv=0,kt=0;
+const cfg=()=>{try{return JSON.parse(localStorage.getItem(SYK)||'{}')||{}}catch(e){return{}}};
+const isOn=()=>{const c=cfg();return!!(c.url&&c.room)};
+const canon=v=>v===undefined?'null':Array.isArray(v)?'['+v.map(canon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}':JSON.stringify(v);
+const rid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-3);
+const editing=()=>$('#modal').classList.contains('open')&&!$('#box .sy');
+async function fb(c,method,path,body,query){
+ const url=c.url.replace(/\/+$/,'')+'/rooms/'+c.room+path+'.json'+(query||'');
+ let r;try{r=await fetch(url,{method,body:body===undefined?undefined:JSON.stringify(body)})}catch(e){throw{net:1}}
+ if(!r.ok)throw{code:r.status};
+ const t=(await r.text()).trim();return t?JSON.parse(t):null}
+function errMsg(e,connecting){
+ const c=e&&e.code;
+ if(c===401||c===403)return'Firebase refused access. In your Firebase database open the Rules tab, paste the rules from the setup steps and press Publish.';
+ if(c===404)return'Database not found. Check the database URL.';
+ if(c===429)return'Firebase says too many requests. It will retry shortly.';
+ if(c)return'Firebase answered with error '+c+'.';
+ return connecting?'Could not reach that address. Check the URL and your internet connection.':'Could not reach Firebase. Check your internet connection.'}
+async function round(){
+ const c=cfg();if(!(c.url&&c.room)){st.ok=null;return}
+ if(st.busy){st.again=true;return}
+ st.busy=true;
+ try{
+  if(editing())return;
+  const rrev=await fb(c,'GET','/rev');
+  if(!(st.seen===false||rrev!==st.seen||lv!==st.lrev||Date.now()-st.full>6e4)){st.ok=true;st.err='';st.last=Date.now()/1e3;return}
+  let remote=await fb(c,'GET','');remote=remote&&typeof remote==='object'?remote:{};
+  if(editing())return;
+  // ---- merge (synchronous, so nothing can change under it) ----
+  let base={};try{base=JSON.parse(localStorage.getItem(BK)||'{}')||{}}catch(e){}
+  const push={},nb={},nextS={};let lchanged=false;
+  for(const kind of KINDS){
+   const recs=new Map(),L={};
+   for(const r of Array.isArray(S[kind])?S[kind]:[]){if(!r||typeof r!=='object')continue;if(!r.id)r.id=rid();recs.set(String(r.id),r);L[String(r.id)]=canon(r)}
+   const R={},rk=remote[kind];if(rk&&typeof rk==='object')for(const i in rk)if(typeof rk[i]==='string')R[i]=rk[i];
+   const bk=base[kind],B=bk&&typeof bk==='object'?bk:{},res={},pk={};
+   for(const i of new Set([...Object.keys(L),...Object.keys(R),...Object.keys(B)])){
+    const l=L[i],r=R[i],b=B[i];let v;
+    if(l===r)v=l;else if(l===b)v=r;else if(r===b)v=l;
+    else if(l===undefined||r===undefined)v=l===undefined?r:l;   // an edit beats a delete
+    else v=l>r?l:r;                                             // both edited it: same pick on both sides
+    if(v!==l){lchanged=true;if(v===undefined)recs.delete(i);else recs.set(i,JSON.parse(v))}
+    if(v!==r)pk[i]=v===undefined?null:v;
+    if(v!==undefined)res[i]=v}
+   nextS[kind]=[...recs.values()];push[kind]=pk;nb[kind]=res}
+  if(lchanged){for(const k of KINDS)S[k]=nextS[k];lv++;try{localStorage.setItem('scvault',JSON.stringify(S))}catch(e){}render()}
+  const after=lv;
+  let pushed=false;
+  for(const kind of KINDS)if(Object.keys(push[kind]).length){await fb(c,'PATCH','/'+kind,push[kind],'?print=silent');pushed=true}
+  if(pushed)await fb(c,'PUT','/rev',rid(),'?print=silent');
+  localStorage.setItem(BK,JSON.stringify(nb));
+  Object.assign(st,{ok:true,err:'',last:Date.now()/1e3,seen:rrev,lrev:after,full:Date.now()});
+ }catch(e){
+  Object.assign(st,{ok:false,err:errMsg(e),seen:false,lrev:null})
+ }finally{st.busy=false;if(st.again){st.again=false;setTimeout(round,50)}}}
+function kick(){if(!isOn())return;clearTimeout(kt);kt=setTimeout(round,400)}
+function loop(){round().finally(()=>setTimeout(loop,st.ok===false?8000:2000))}
+async function connect(text){
+ let[url,room]=String(text).trim().split('#');url=(url||'').trim().replace(/\/+$/,'');room=(room||'').trim();
+ if(!/^https?:\/\/[^\s#]+$/.test(url))throw'That does not look like a sync code or a Firebase database URL.';
+ const created=!room;
+ if(created)room=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>'abcdefghijklmnopqrstuvwxyz0123456789'[b%36]).join('');
+ if(!/^[A-Za-z0-9_-]{6,64}$/.test(room))throw'The room part of that sync code is not valid.';
+ const c={url,room};
+ try{await fb(c,'GET','/rev')}catch(e){throw errMsg(e,true)}   // checks the address and the database rules before saving anything
+ localStorage.setItem(SYK,JSON.stringify(c));localStorage.removeItem(BK);
+ Object.assign(st,{ok:null,err:'',last:0,seen:false,lrev:null,full:0});kick();return created}
+function disconnect(){localStorage.removeItem(SYK);localStorage.removeItem(BK);Object.assign(st,{ok:null,err:'',last:0,seen:false,lrev:null,full:0})}
+function status(){const c=cfg(),on=!!(c.url&&c.room);return{on,ok:on?st.ok:null,err:on?st.err:'',last:st.last,code:on?c.url+'#'+c.room:''}}
+return{touch(){lv++;kick()},start(){loop();document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick()})},connect,disconnect,status,
+ now(){Object.assign(st,{seen:false,lrev:null});kick()}};
+})();
+// ---- the SYNC button and dialog ----
+let SY=null;
+function syncDot(){const b=$('#syncb');if(!b)return;const on=SY&&SY.on,c=!on?'off':SY.ok===false?'bad':SY.ok?'ok':'wait';
+ b.innerHTML='<i class="dot '+c+'"></i>SYNC';b.title=!on?'Not shared yet. Click to share this vault with a friend.':SY.ok===false?SY.err:SY.ok?'Live: changes sync within a few seconds':'Connecting…'}
+const syText=s=>s.ok===false?'<span class="miss">Problem:</span> '+esc(s.err):s.ok?'<span class="ok">Live.</span> Last checked '+new Date(s.last*1000).toLocaleTimeString():'Connecting…';
+function showSync(msg,err){
+ const s=SYNC.status(),m=`<p id="symsg" class="dim"${err?' style="color:#ff6b5b"':''}>${esc(msg||'')}</p>`,
+  rules='{"rules":{"rooms":{"$room":{".read":true,".write":true}}}}';
+ $('#box').innerHTML=s.on?`<div class="sy"><h2>SYNC // SHARED VAULT</h2><div class="st" id="sy_st">${syText(s)}</div><p class="dim">Send this sync code to your friend. They open the same page, press SYNC, paste it and press JOIN. Anyone with the code can edit this vault, so keep it private.</p><textarea id="sy_out" rows="2" readonly style="width:100%">${esc(s.code)}</textarea>${m}<p class="dim">Use RESET ALL or IMPORT with care while sharing: deletions are shared too.</p><div class="row"><button class="danger" data-act="syOff">DISCONNECT</button><span></span><button data-act="syNow">SYNC NOW</button><button class="pri" data-act="copySync">COPY CODE</button><button data-act="close">CLOSE</button></div></div>`
+ :`<div class="sy"><h2>SYNC // SHARE WITH A FRIEND</h2><p class="dim">Both of you see and edit the same items, ships and builds, updated within a few seconds, whenever either of you has the page open. It uses a free Firebase database. Without sync, your vault lives only in this browser, so use DATA now and then to keep a backup.</p><div class="fm"><label class="w">I HAVE A SYNC CODE<span style="display:flex;gap:6px"><input id="sy_code" style="flex:1" placeholder="Paste the code your friend sent"><button class="pri" data-act="syJoin">JOIN</button></span></label><label class="w">OR START A NEW SHARED VAULT: FIREBASE DATABASE URL<span style="display:flex;gap:6px"><input id="sy_url" style="flex:1" placeholder="https://your-project-default-rtdb.firebaseio.com"><button class="pri" data-act="syNew">CREATE</button></span></label></div>${m}<details><summary>FIREBASE SETUP (ONCE, ABOUT 5 MINUTES, ONE OF YOU)</summary><ol><li>Go to console.firebase.google.com and create a project (you can turn Google Analytics off).</li><li>Build → Realtime Database → Create Database. Pick a location and start in locked mode.</li><li>Open the Rules tab, replace everything with the text below, and press Publish.</li><li>On the Data tab, copy the database URL shown at the top and paste it above, then press CREATE.</li><li>Send the sync code that appears to your friend.</li></ol><textarea rows="2" readonly style="width:100%;margin-top:8px">${esc(rules)}</textarea></details><div class="row"><span></span><button data-act="close">CLOSE</button></div></div>`;openM()}
+async function syGo(v){const m=$('#symsg');m.textContent='Connecting…';m.style.color='';
+ try{await SYNC.connect(v);SY=SYNC.status();syncDot();showSync('Connected. Your friend can join with the code below.')}catch(e){m.textContent=String(e.message||e);m.style.color='#ff6b5b'}}
+
+(async()=>{render();SY=SYNC.status();syncDot();SYNC.start();setInterval(()=>{SY=SYNC.status();syncDot();const e=$('#sy_st');if(e)e.innerHTML=syText(SY)},1000);migrateShips()})();
+</script></body></html>
