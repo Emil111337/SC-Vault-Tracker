@@ -81,18 +81,25 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
 
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--dim);vertical-align:1px}.dot.ok{background:#5fd36b;box-shadow:0 0 6px #5fd36b}.dot.bad{background:#ff6b5b;box-shadow:0 0 6px #ff6b5b}.dot.wait{background:#ffb347}
 .sy ol{margin:6px 0 0;padding-left:20px;font-weight:500;color:var(--dim)}.sy li{margin:3px 0}.sy details{margin-top:12px;border:1px solid var(--line);padding:8px 12px}.sy summary{cursor:pointer;color:var(--acc);font:700 11px Orbitron,sans-serif;letter-spacing:.14em}.sy code,.sy textarea{font:12px/1.4 Consolas,monospace}.sy .fm{margin-top:10px}.sy .st{padding:6px 10px;border:1px solid var(--line);margin:8px 0}
+
+.lcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px;align-items:start}
+.lc>summary .pn{display:inline-flex;align-items:center}.pn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;margin-right:4px}
+.lc>summary .kd{font:500 12px Rajdhani,sans-serif;letter-spacing:.06em;color:var(--dim);text-transform:none;border:1px solid var(--line);padding:0 6px}
+.lc.un{border-color:#ffb347}.lc.un>summary{color:#ffb347}
+.lr{display:flex;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid var(--line)}.lr .rd{width:8px;height:8px;border-radius:50%;flex:none;background:var(--r,#3cc8ff)}
+.lr .ln{flex:1;min-width:0;cursor:pointer}.lr .ln:hover{color:var(--acc)}.lr small{color:var(--dim);margin-left:6px}.lr b{font:700 12px Orbitron,sans-serif;color:var(--acc)}.lr button{padding:2px 9px;font-size:11px}
 </style></head><body>
 <header>
  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 7l4.5 2.5v5L12 17l-4.5-2.5v-5z"/></svg><div><b>RARE LOOT VAULT</b><small>PERSONAL INVENTORY // MOBIGLAS</small></div></div>
- <nav><button data-t="vault">VAULT</button><button data-t="fleet">FLEET</button><button data-t="builds">BUILDS</button></nav>
+ <nav><button data-t="vault">VAULT</button><button data-t="fleet">FLEET</button><button data-t="locs">LOCATIONS</button><button data-t="builds">BUILDS</button></nav>
  <div class="acts"><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="sync" id="syncb"><i class="dot off"></i>SYNC</button><button data-act="data">DATA</button></div>
 </header>
 <main>
  <div id="stats"></div>
  <section id="vault">
-  <div class="qa"><input id="qa" placeholder="Type an item name (e.g. Umbra) and press Enter to look it up and add it…"><button class="pri" id="qab" data-act="quick">FIND &amp; ADD</button></div><div id="msg"></div>
+  <div class="qa"><input id="qa" placeholder="Type an item name (e.g. Umbra) and press Enter to look it up and add it…"><input id="qloc" list="locdl" autocomplete="off" placeholder="Stored at (optional)" style="flex:0 0 210px"><button class="pri" id="qab" data-act="quick">FIND &amp; ADD</button></div><div id="msg"></div>
   <div id="cats"></div>
-  <div class="bar"><input id="q" placeholder="Search name, maker, location, notes…"><select id="fcls"></select><select id="frar"></select><select id="fsort"><option value="rar">Sort: Rarity</option><option value="cat">Sort: Category</option><option value="name">Sort: Name</option><option value="qty">Sort: Quantity</option><option value="new">Sort: Newest</option></select><select id="fequ"><option value="">Equipped: any</option><option value="eq">On a ship</option><option value="spare">Not on a ship</option></select></div>
+  <div class="bar"><input id="q" placeholder="Search name, maker, location, notes…"><select id="fcls"></select><select id="frar"></select><select id="floc"></select><select id="fsort"><option value="rar">Sort: Rarity</option><option value="cat">Sort: Category</option><option value="loc">Sort: Location</option><option value="name">Sort: Name</option><option value="qty">Sort: Quantity</option><option value="new">Sort: Newest</option></select><select id="fequ"><option value="">Equipped: any</option><option value="eq">On a ship</option><option value="spare">Not on a ship</option></select></div>
   <div id="grid"></div>
  </section>
  <section id="builds" hidden>
@@ -105,8 +112,14 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
   <div class="srt"><span class="dim">Fleet sorted by</span><select id="fsh"><option value="rar">Rarity</option><option value="price">Pledge price</option><option value="name">Name</option><option value="size">Size</option><option value="new">Newest</option></select><span class="dim" id="fcount"></span></div>
   <div id="sgrid" style="margin-top:12px"></div>
  </section>
+<section id="locsec" hidden>
+  <div class="qa"><input id="lq" placeholder="Where is…? Type an item or ship name to find every place it is stored"></div>
+  <div class="dim" id="lsum" style="margin:6px 0 12px"></div>
+  <div id="lgrid" class="lcols"></div>
+ </section>
 </main>
 <footer style="text-align:center;color:var(--dim);font-size:12px;padding:0 0 24px">Item data: Star Citizen Wiki API (api.star-citizen.wiki). Your vault is saved in this browser; use SYNC to share it with a friend, and DATA to keep a backup.</footer>
+<datalist id="locdl"></datalist>
 <div id="modal"><div id="box"></div></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -117,7 +130,7 @@ const RAR=['Uncommon','Rare','Very Rare','Legendary'],RC={'Uncommon':'#5fd36b','
 const CLS=['Military','Stealth','Industrial','Competition','Civilian'],SLOTSUBS=[...CATS['Components'],...CATS['Ship Weapons'],...CATS['Missiles']];
 const opts=(a,v)=>a.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-let S={items:[],builds:[],ships:[]},F={cat:'All',q:'',cls:'',rar:'',equ:'',sort:'rar'},tab='vault',ref=null,tm,cur,isNew,cb,cbNew;
+let S={items:[],builds:[],ships:[]},F={cat:'All',q:'',cls:'',rar:'',loc:'',equ:'',sort:'rar'},tab='vault',ref=null,tm,cur,isNew,cb,cbNew;
 try{const c=localStorage.getItem('scvault');if(c)S=JSON.parse(c)}catch(e){}
 const norm=()=>{S.items=S.items||[];S.builds=S.builds||[];S.ships=S.ships||[];const ids=new Set(S.items.map(i=>i.id));S.ships.forEach(h=>{h.slots=h.slots||[];h.slots.forEach(s=>{if(s.item&&!ids.has(s.item))s.item=null})})};
 function persist(){try{localStorage.setItem('scvault',JSON.stringify(S))}catch(e){say('Could not save in this browser (storage full or blocked).',1)}SYNC.touch();render()}
@@ -128,18 +141,77 @@ const openM=()=>$('#modal').classList.add('open'),closeM=()=>$('#modal').classLi
 function render(){
  norm();const I=S.items;
  $('#stats').innerHTML=[['Entries',I.length],['Total units',I.reduce((n,i)=>n+(+i.qty||0),0)],['Legendary',I.filter(i=>i.rar==='Legendary').length],['Ships',S.ships.length],['Builds ready',S.builds.filter(b=>b.slots.length&&!missing(b)).length+'/'+S.builds.length]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k.toUpperCase()}</span></div>`).join('');
- $('#vault').hidden=tab!=='vault';$('#builds').hidden=tab!=='builds';$('#fleet').hidden=tab!=='fleet';
+ $('#vault').hidden=tab!=='vault';$('#builds').hidden=tab!=='builds';$('#fleet').hidden=tab!=='fleet';$('#locsec').hidden=tab!=='locs';locList();
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
- tab==='vault'?vault():tab==='fleet'?fleet():builds();
+ tab==='vault'?vault():tab==='fleet'?fleet():tab==='locs'?locsView():builds();
 }
+const PLACES=[['Lorville','Hurston','City'],['Teasa Spaceport','Hurston','Spaceport'],['Everus Harbor','Hurston','Station'],['Hurston','Hurston','Planet'],['Arial','Hurston','Moon'],['Aberdeen','Hurston','Moon'],['Magda','Hurston','Moon'],['Ita','Hurston','Moon'],
+['Orison','Crusader','City'],['August Dunlow Spaceport','Crusader','Spaceport'],['Seraphim Station','Crusader','Station'],['Crusader','Crusader','Planet'],['Cellin','Crusader','Moon'],['Daymar','Crusader','Moon'],['Yela','Crusader','Moon'],['Grim HEX','Crusader','Station'],
+['Area18','ArcCorp','City'],['Riker Memorial Spaceport','ArcCorp','Spaceport'],['Baijini Point','ArcCorp','Station'],['ArcCorp','ArcCorp','Planet'],['Lyria','ArcCorp','Moon'],['Wala','ArcCorp','Moon'],
+['New Babbage','microTech','City'],['Port Tressler','microTech','Station'],['microTech','microTech','Planet'],['Calliope','microTech','Moon'],['Clio','microTech','Moon'],['Euterpe','microTech','Moon'],
+['CRU-L1 Ambitious Dream Station','Stanton Lagrange points','Station'],['CRU-L4 Shallow Fields Station','Stanton Lagrange points','Station'],['CRU-L5 Beautiful Glen Station','Stanton Lagrange points','Station'],
+['HUR-L1 Green Glade Station','Stanton Lagrange points','Station'],['HUR-L2 Faithful Dream Station','Stanton Lagrange points','Station'],['HUR-L3 Thundering Express Station','Stanton Lagrange points','Station'],['HUR-L4 Melodic Fields Station','Stanton Lagrange points','Station'],['HUR-L5 High Course Station','Stanton Lagrange points','Station'],
+['ARC-L1 Wide Forest Station','Stanton Lagrange points','Station'],['ARC-L2 Lively Pathway Station','Stanton Lagrange points','Station'],['ARC-L3 Modern Express Station','Stanton Lagrange points','Station'],['ARC-L4 Faint Glen Station','Stanton Lagrange points','Station'],['ARC-L5 Yellow Core Station','Stanton Lagrange points','Station'],
+['MIC-L1 Shallow Frontier Station','Stanton Lagrange points','Station'],['MIC-L2 Long Forest Station','Stanton Lagrange points','Station'],['MIC-L3 Endless Odyssey Station','Stanton Lagrange points','Station'],['MIC-L4 Red Crossroads Station','Stanton Lagrange points','Station'],['MIC-L5 Modern Icarus Station','Stanton Lagrange points','Station'],
+['Ruin Station','Pyro','Station'],['Checkmate Station','Pyro','Station'],['Orbituary','Pyro','Station'],['Patch City','Pyro','Station'],['Gaslight','Pyro','Station'],['Rat\'s Nest','Pyro','Station'],['Endgame','Pyro','Station'],['Megumi Refueling','Pyro','Station'],['Dudley and Daughters','Pyro','Station'],['Rod\'s Fuel \'N Supplies','Pyro','Station'],['Starlight Service Station','Pyro','Station'],
+['Levski','Nyx','City'],['Delamar','Nyx','Planet'],
+['Stanton Gateway','Jump points','Station'],['Pyro Gateway','Jump points','Station'],['Terra Gateway','Jump points','Station'],
+['Wikelo Emporium Dasi Station','Wikelo Emporiums','Station'],['Wikelo Emporium Kinga Station','Wikelo Emporiums','Station'],['Wikelo Emporium Selo Station','Wikelo Emporiums','Station']];
+const AREAS=['Hurston','Crusader','ArcCorp','microTech','Stanton Lagrange points','Pyro','Nyx','Jump points','Wikelo Emporiums'];
+const locKey=s=>String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,' ');
+const PBY=new Map(PLACES.map((p,i)=>[locKey(p[0]),[...p,i]]));
+const locName=s=>{const k=locKey(s);return PBY.has(k)?PBY.get(k)[0]:String(s||'').trim().replace(/\s+/g,' ')};
+function usedLocs(){const m=new Map(),add=(l,ship,n)=>{const k=locKey(l);if(!k)return;const e=m.get(k)||{key:k,name:locName(l),items:0,units:0,ships:0};if(ship)e.ships++;else{e.items++;e.units+=+n||0}m.set(k,e)};S.items.forEach(i=>add(i.loc,0,i.qty));S.ships.forEach(h=>add(h.loc,1));return m}
+const canonLoc=s=>{s=String(s||'').trim().replace(/\s+/g,' ');if(!s)return'';const u=usedLocs().get(locKey(s));return PBY.has(locKey(s))?PBY.get(locKey(s))[0]:u?u.name:s};
+let LOCSIG='';
+function locList(){const u=usedLocs(),sig=[...u.keys()].sort().join('|');if(sig===LOCSIG)return;LOCSIG=sig;
+ const ctx=n=>{const p=PBY.get(locKey(n));return p?p[1]+' · '+p[2]:'your own place'};
+ $('#locdl').innerHTML=[...[...u.values()].sort((a,b)=>b.items+b.ships-a.items-a.ships).map(e=>[e.name,'in your vault · '+ctx(e.name)]),...PLACES.filter(p=>!u.has(locKey(p[0]))).map(p=>[p[0],p[1]+' · '+p[2]])].map(([v,l])=>`<option value="${esc(v)}" label="${esc(l)}"></option>`).join('')}
+const PIN='<svg viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const stackKey=i=>[i.name,i.cat,i.sub,i.size,i.grade,i.cls,i.mfr,i.rar,i.slug].map(x=>String(x||'').toLowerCase()).join('|');
+function locsView(){
+ const q=($('#lq').value||'').trim().toLowerCase(),m=new Map(),slot=l=>{const k=locKey(l);let e=m.get(k);if(!e){e={key:k,name:k?locName(l):'No location set',items:[],ships:[]};m.set(k,e)}return e};
+ const hit=t=>!q||t.toLowerCase().includes(q);
+ S.items.filter(i=>hit([i.name,i.mfr,i.sub,i.size,i.notes].join(' '))).forEach(i=>slot(i.loc).items.push(i));
+ S.ships.filter(s=>hit([shipName(s),s.name,s.mfr,s.role,s.notes].join(' '))).forEach(s=>slot(s.loc).ships.push(s));
+ const all=[...m.values()],un=all.find(e=>!e.key),placed=all.filter(e=>e.key),total=S.items.filter(i=>!locKey(i.loc)).length+S.ships.filter(s=>!locKey(s.loc)).length;
+ $('#lsum').innerHTML=(q?'Showing places that hold “'+esc(q)+'”: ':'')+placed.length+' place'+(placed.length===1?'':'s')+(total&&!q?' · <b style="color:#ffb347">'+total+' entr'+(total===1?'y':'ies')+' without a location</b>':'');
+ const card=e=>{const rows=e.items.length+e.ships.length,units=e.items.reduce((n,i)=>n+(+i.qty||0),0),k='l:'+(e.key||'none'),op=q?true:OPEN[k]!==undefined?OPEN[k]:rows<=6||!e.key,pl=PBY.get(e.key);
+  return `<details class="grp lc${e.key?'':' un'}" data-k="${esc(k)}"${op?' open':''}><summary><span class="pn">${PIN}</span>${esc(e.name.toUpperCase())}${pl?`<span class="kd">${esc(pl[2])}</span>`:''}<em>${[e.items.length?e.items.length+' item'+(e.items.length===1?'':'s')+' · '+units+' unit'+(units===1?'':'s'):'',e.ships.length?e.ships.length+' ship'+(e.ships.length===1?'':'s'):''].filter(Boolean).join(' · ')}</em></summary>`+
+   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i><span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span><button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
+   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i><span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span><b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
+ const areaOf=e=>{const p=PBY.get(e.key);return p?p[1]:'Your own places'},groups=new Map();
+ placed.forEach(e=>{const a=areaOf(e);if(!groups.has(a))groups.set(a,[]);groups.get(a).push(e)});
+ const order=[...AREAS,'Your own places'].filter(a=>groups.has(a));
+ const sortIn=(a,e)=>e.sort((x,y)=>a==='Your own places'?x.name.localeCompare(y.name):PBY.get(x.key)[3]-PBY.get(y.key)[3]);
+ let out=un?`<div class="gh" style="color:#ffb347"><span class="pn">${PIN}</span><span>NOT PLACED YET</span><em>use MOVE to give them a location</em></div>`+card(un):'';
+ order.forEach(a=>{const L=sortIn(a,groups.get(a));out+=`<div class="gh"><span>${esc(a.toUpperCase())}</span><em>${L.length}</em></div>`+L.map(card).join('')});
+ $('#lgrid').innerHTML=out||`<div class="empty" style="grid-column:1/-1"><h3 class="orb">${q?'NOTHING FOUND':'NOTHING STORED YET'}</h3>${q?'No item or ship matches that name.':'Give your items a location (STORED AT) and they will show up here, grouped by place.'}</div>`}
+let mv=null;
+function moveForm(kind,id){
+ const o=(kind==='i'?S.items:S.ships).find(x=>x.id===id);if(!o)return;mv={kind,id};const it=kind==='i',q=it?(+o.qty||0):1;
+ $('#box').innerHTML=`<h2>MOVE ${it?'ITEM':'SHIP'}</h2><p class="dim"><b>${esc(it?o.name:shipName(o))}</b>${it?' ×'+q:''} is at <b>${esc(o.loc||'no location set')}</b>.</p><div class="fm">${it&&q>1?`<label>HOW MANY TO MOVE<input id="mv_n" type="number" min="1" max="${q}" value="${q}"></label>`:''}<label class="w">MOVE TO<input id="mv_to" list="locdl" autocomplete="off" placeholder="Start typing a station, city, moon…"></label></div><div class="row"><span></span><button data-act="close">CANCEL</button><button class="pri" data-act="doMove">MOVE</button></div>`;openM();$('#mv_to').focus()}
+function doMove(){
+ const to=canonLoc($('#mv_to').value);if(!to)return $('#mv_to').focus();
+ const o=(mv.kind==='i'?S.items:S.ships).find(x=>x.id===mv.id);if(!o){closeM();return}
+ if(mv.kind==='s'){o.loc=to;closeM();persist();return}
+ const q=+o.qty||0,n=Math.min(q,Math.max(1,Math.trunc(+($('#mv_n')||{value:q}).value)||q)),dest=S.items.find(x=>x!==o&&locKey(x.loc)===locKey(to)&&stackKey(x)===stackKey(o));
+ if(n>=q){
+  if(dest){dest.qty=(+dest.qty||0)+q;S.ships.forEach(h=>(h.slots||[]).forEach(s=>{if(s.item===o.id)s.item=dest.id}));S.items=S.items.filter(x=>x!==o)}
+  else o.loc=to}
+ else{o.qty=q-n;if(dest)dest.qty=(+dest.qty||0)+n;else S.items.push({...o,id:uid(),t:Date.now(),qty:n,loc:to})}
+ closeM();persist()}
 function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span>${i.loc?'▸ '+esc(i.loc):''}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
 function vault(){
  const I=S.items,q=F.q.toLowerCase();
  $('#cats').innerHTML=['All',...Object.keys(CATS)].map(c=>`<button class="${F.cat===c?'on':''}" data-c="${c}">${c==='All'?'':ico(c)}${c.toUpperCase()} <em>${c==='All'?I.length:I.filter(i=>i.cat===c).length}</em></button>`).join('');
- const L=I.filter(i=>(F.cat==='All'||i.cat===F.cat)&&(!F.cls||i.cls===F.cls)&&(!F.rar||i.rar===F.rar)&&(!F.equ||(F.equ==='eq')===(fitted(i.id).length>0))&&(!q||[i.name,i.mfr,i.loc,i.notes,i.sub,i.size].join(' ').toLowerCase().includes(q)));
+ $('#floc').innerHTML='<option value="">All locations</option><option value="__none">No location set</option>'+[...usedLocs().values()].sort((a,b)=>a.name.localeCompare(b.name)).map(e=>`<option value="${esc(e.key)}">${esc(e.name)} (${e.items+e.ships})</option>`).join('');if(F.loc&&F.loc!=='__none'&&!usedLocs().has(F.loc))F.loc='';$('#floc').value=F.loc||'';
+ const L=I.filter(i=>(F.cat==='All'||i.cat===F.cat)&&(!F.cls||i.cls===F.cls)&&(!F.rar||i.rar===F.rar)&&(!F.loc||(F.loc==='__none'?!locKey(i.loc):locKey(i.loc)===F.loc))&&(!F.equ||(F.equ==='eq')===(fitted(i.id).length>0))&&(!q||[i.name,i.mfr,i.loc,i.notes,i.sub,i.size].join(' ').toLowerCase().includes(q)));
  const CK=Object.keys(CATS),CI=c=>{const k=CK.indexOf(c);return k<0?99:k},SI=i=>{const k=(CATS[i.cat]||[]).indexOf(i.sub);return k<0?99:k};
- L.sort((a,b)=>F.sort==='cat'?CI(a.cat)-CI(b.cat)||SI(a)-SI(b)||String(a.sub).localeCompare(b.sub)||RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='rar'?RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='qty'?b.qty-a.qty:F.sort==='new'?(b.t||0)-(a.t||0):a.name.localeCompare(b.name));
- const gh=F.sort==='cat'&&F.cat==='All'?(()=>{let last,o='';L.forEach(i=>{if(i.cat!==last){last=i.cat;o+=`<div class="gh">${ico(i.cat)}<span>${esc(i.cat.toUpperCase())}</span><em>${L.filter(x=>x.cat===i.cat).length}</em></div>`}o+=card(i)});return o})():null;
+ const LK=i=>locKey(i.loc)||'\uffff';
+ L.sort((a,b)=>F.sort==='loc'?LK(a).localeCompare(LK(b))||CI(a.cat)-CI(b.cat)||a.name.localeCompare(b.name):F.sort==='cat'?CI(a.cat)-CI(b.cat)||SI(a)-SI(b)||String(a.sub).localeCompare(b.sub)||RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='rar'?RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name):F.sort==='qty'?b.qty-a.qty:F.sort==='new'?(b.t||0)-(a.t||0):a.name.localeCompare(b.name));
+ const gk=F.sort==='cat'&&F.cat==='All'?i=>i.cat:F.sort==='loc'&&!F.loc?i=>locKey(i.loc)?locName(i.loc):'No location set':null;
+ const gh=gk?(()=>{let last,o='';const cnt={};L.forEach(i=>{const k=gk(i);cnt[k]=(cnt[k]||0)+1});L.forEach(i=>{const k=gk(i);if(k!==last){last=k;o+=`<div class="gh">${F.sort==='cat'?ico(i.cat):'<span class="pn">'+PIN+'</span>'}<span>${esc(k.toUpperCase())}</span><em>${cnt[k]}</em></div>`}o+=card(i)});return o})():null;
  $('#grid').innerHTML=L.length?(gh||L.map(card).join('')):I.length?'<div class="empty">No items match these filters.</div>':'<div class="empty"><h3 class="orb">VAULT EMPTY</h3>Log your first rare drop, or load a few sample entries to see how it works.<br><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="sample">LOAD SAMPLE DATA</button></div>';
 }
 function builds(){
@@ -147,7 +219,7 @@ function builds(){
 }
 function editItem(id){
  const f=id&&S.items.find(i=>i.id===id);cur=f?{...f}:{cat:'Components',sub:'Power Plant',rar:'Rare',qty:1};isNew=!f;const it=cur;
- $('#box').innerHTML=`<h2>${f?'EDIT ITEM':'NEW ITEM'}</h2><div class="fm"><label class="w">NAME<span style="display:flex;gap:6px"><input id="f_name" style="flex:1" placeholder="Type a name, then LOOK UP" value="${esc(it.name)}"><button data-act="fill">LOOK UP</button><button data-act="wiki" title="Search starcitizen.tools">WIKI ↗</button></span></label><div class="w dim" id="fmsg"></div><label>CATEGORY<select id="f_cat">${opts(Object.keys(CATS),it.cat)}</select></label><label>TYPE<select id="f_sub"></select></label><label>MANUFACTURER<input id="f_mfr" value="${esc(it.mfr)}"></label><label>SIZE<input id="f_size" placeholder="S1, S2, S3…" value="${esc(it.size)}"></label><label>GRADE<select id="f_grade">${opts(['','A','B','C','D'],it.grade||'')}</select></label><label>CLASS<select id="f_cls">${opts(['',...CLS],it.cls||'')}</select></label><label>RARITY<select id="f_rar">${opts(RAR,it.rar)}</select></label><label>QUANTITY<input id="f_qty" type="number" min="0" value="${it.qty==null?1:it.qty}"></label><label class="w">STORED AT<input id="f_loc" placeholder="Hangar, ship, station…" value="${esc(it.loc)}"></label><label class="w">NOTES<textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label></div><div class="row">${f?'<button class="danger" data-act="del">DELETE</button>':''}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="save">SAVE</button></div>`;
+ $('#box').innerHTML=`<h2>${f?'EDIT ITEM':'NEW ITEM'}</h2><div class="fm"><label class="w">NAME<span style="display:flex;gap:6px"><input id="f_name" style="flex:1" placeholder="Type a name, then LOOK UP" value="${esc(it.name)}"><button data-act="fill">LOOK UP</button><button data-act="wiki" title="Search starcitizen.tools">WIKI ↗</button></span></label><div class="w dim" id="fmsg"></div><label>CATEGORY<select id="f_cat">${opts(Object.keys(CATS),it.cat)}</select></label><label>TYPE<select id="f_sub"></select></label><label>MANUFACTURER<input id="f_mfr" value="${esc(it.mfr)}"></label><label>SIZE<input id="f_size" placeholder="S1, S2, S3…" value="${esc(it.size)}"></label><label>GRADE<select id="f_grade">${opts(['','A','B','C','D'],it.grade||'')}</select></label><label>CLASS<select id="f_cls">${opts(['',...CLS],it.cls||'')}</select></label><label>RARITY<select id="f_rar">${opts(RAR,it.rar)}</select></label><label>QUANTITY<input id="f_qty" type="number" min="0" value="${it.qty==null?1:it.qty}"></label><label class="w">STORED AT<input id="f_loc" list="locdl" autocomplete="off" placeholder="Start typing: Lorville, Port Tressler, a ship…" value="${esc(it.loc)}"></label><label class="w">NOTES<textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label></div><div class="row">${f?'<button class="danger" data-act="del">DELETE</button>':''}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="save">SAVE</button></div>`;
  const sub=()=>{const L=CATS[$('#f_cat').value].slice();if(it.sub&&!L.includes(it.sub))L.push(it.sub);$('#f_sub').innerHTML=opts(L,it.sub)};sub();$('#f_cat').onchange=sub;openM();
 }
 function grab(){cb.name=$('#b_name').value;cb.cls=$('#b_cls').value}
@@ -164,9 +236,9 @@ async function search(q){if(q.trim().length<2)throw'Type at least 2 characters.'
 const desc=d=>[d.sub,d.size,d.grade&&'Grade '+d.grade,d.cls,d.mfr].filter(Boolean).join(' · ');
 const picker=(r,act)=>'Several matches, pick one:<div class="picks">'+r.map((d,i)=>`<button data-act="${act}" data-i="${i}">${esc(d.name)} <small>${esc(desc(d))}</small></button>`).join('')+'</div>';
 function addFound(d){
- const ex=S.items.find(i=>i.slug?i.slug===d.slug:i.name.toLowerCase()===d.name.toLowerCase());
- if(ex)ex.qty=(+ex.qty||0)+1;else S.items.push({id:uid(),t:Date.now(),name:d.name,cat:d.cat,sub:d.sub,mfr:d.mfr,size:d.size,grade:d.grade,cls:d.cls,rar:d.rar,qty:1,loc:'',notes:'',src:'wiki',slug:d.slug,craft:d.craft});
- $('#qa').value='';persist();say((ex?'Quantity +1: ':'Added: ')+d.name+' · '+desc(d)+' · from the Star Citizen Wiki');
+ const loc=canonLoc($('#qloc').value),ex=S.items.find(i=>(i.slug?i.slug===d.slug:i.name.toLowerCase()===d.name.toLowerCase())&&locKey(i.loc)===locKey(loc));
+ if(ex)ex.qty=(+ex.qty||0)+1;else S.items.push({id:uid(),t:Date.now(),name:d.name,cat:d.cat,sub:d.sub,mfr:d.mfr,size:d.size,grade:d.grade,cls:d.cls,rar:d.rar,qty:1,loc,notes:'',src:'wiki',slug:d.slug,craft:d.craft});
+ $('#qa').value='';persist();say((ex?'Quantity +1: ':'Added: ')+d.name+' · '+desc(d)+(loc?' · at '+loc:'')+' · from the Star Citizen Wiki');
 }
 async function quick(){
  const n=$('#qa').value.trim();if(!n)return;const b=$('#qab');b.disabled=true;say('Looking it up on the Star Citizen Wiki…');
@@ -260,10 +332,10 @@ async function migrateShips(){
  let n=0;for(const h of old)if(await refreshShip(h.id,true))n++;
  sayS(n?'Updated '+n+' ship'+(n>1?'s':'')+' with pledge prices.':'Could not update the old ship slots (is the wiki reachable?). They will be retried next time you open the vault.',!n)
 }
-function grabS(){cs.msrp=+$('#sh_px').value||null;cs.rarOv=$('#sh_rar').value;cs.name=$('#sh_name').value;cs.nick=$('#sh_nick').value;cs.loc=$('#sh_loc').value;cs.notes=$('#sh_notes').value}
+function grabS(){cs.msrp=+$('#sh_px').value||null;cs.rarOv=$('#sh_rar').value;cs.name=$('#sh_name').value;cs.nick=$('#sh_nick').value;cs.loc=canonLoc($('#sh_loc').value);cs.notes=$('#sh_notes').value}
 function editShip(id){const f=id&&S.ships.find(x=>x.id===id);cs=f?JSON.parse(JSON.stringify(f)):{name:'',nick:'',mfr:'',role:'',size:'',loc:'',notes:'',slots:[]};csNew=!f;sform();openM()}
 function sform(){const h=cs;
- $('#box').innerHTML=`<h2>${csNew?'NEW SHIP':'EDIT SHIP'}</h2><div class="fm"><label>SHIP MODEL<input id="sh_name" value="${esc(h.name)}"></label><label>YOUR NAME FOR IT<input id="sh_nick" placeholder="optional" value="${esc(h.nick)}"></label><label>LOCATION<input id="sh_loc" placeholder="Where it is parked" value="${esc(h.loc)}"></label><label>NOTES<input id="sh_notes" value="${esc(h.notes)}"></label><label>PLEDGE PRICE (USD)<input id="sh_px" type="number" min="0" placeholder="from the wiki" value="${esc(h.msrp||'')}"></label><label>RARITY<select id="sh_rar"><option value="">Auto (from price)</option>${opts(SRAR,h.rarOv||'')}</select></label></div><p class="dim">Component slots. Fix anything the wiki got wrong, or add your own.</p>${h.slots.map((s,i)=>`<div class="srow2"><select data-ss="${i}" data-sk="type">${opts(SLOTT,s.type)}</select><input data-ss="${i}" data-sk="size" placeholder="Size" value="${esc(s.size)}"><input data-ss="${i}" data-sk="label" placeholder="Label" value="${esc(s.label)}"><button data-act="rmSlotS" data-i="${i}">✕</button></div>`).join('')}<button data-act="addSlotS">+ SLOT</button><div class="row">${csNew?'':'<button class="danger" data-act="delShip">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveShip">SAVE</button></div>`}
+ $('#box').innerHTML=`<h2>${csNew?'NEW SHIP':'EDIT SHIP'}</h2><div class="fm"><label>SHIP MODEL<input id="sh_name" value="${esc(h.name)}"></label><label>YOUR NAME FOR IT<input id="sh_nick" placeholder="optional" value="${esc(h.nick)}"></label><label>LOCATION<input id="sh_loc" list="locdl" autocomplete="off" placeholder="Where it is parked" value="${esc(h.loc)}"></label><label>NOTES<input id="sh_notes" value="${esc(h.notes)}"></label><label>PLEDGE PRICE (USD)<input id="sh_px" type="number" min="0" placeholder="from the wiki" value="${esc(h.msrp||'')}"></label><label>RARITY<select id="sh_rar"><option value="">Auto (from price)</option>${opts(SRAR,h.rarOv||'')}</select></label></div><p class="dim">Component slots. Fix anything the wiki got wrong, or add your own.</p>${h.slots.map((s,i)=>`<div class="srow2"><select data-ss="${i}" data-sk="type">${opts(SLOTT,s.type)}</select><input data-ss="${i}" data-sk="size" placeholder="Size" value="${esc(s.size)}"><input data-ss="${i}" data-sk="label" placeholder="Label" value="${esc(s.label)}"><button data-act="rmSlotS" data-i="${i}">✕</button></div>`).join('')}<button data-act="addSlotS">+ SLOT</button><div class="row">${csNew?'':'<button class="danger" data-act="delShip">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveShip">SAVE</button></div>`}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.sk)cs.slots[t.dataset.ss][t.dataset.sk]=t.value});
 function openPicker(hid,sid){
  const h=S.ships.find(x=>x.id===hid),s=h&&h.slots.find(x=>x.id===sid);if(!s)return;PK={h:hid,s:sid};
@@ -275,7 +347,7 @@ function openPicker(hid,sid){
 function equip(id){const h=S.ships.find(x=>x.id===PK.h),s=h&&h.slots.find(x=>x.id===PK.s),it=S.items.find(i=>i.id===id);if(!s||!it)return;const f=fitted(id);if(f.length>=(+it.qty||0)){const o=f.find(x=>x.s!==s);if(o)o.s.item=null}s.item=id;closeM();persist()}
 const two=(el,fn,t)=>{if(el.dataset.s)fn();else{el.dataset.s=1;el.textContent=t||'CONFIRM?'}};
 const acts={
- add:()=>editItem(),close:closeM,sync:()=>showSync(),
+ add:()=>editItem(),close:closeM,moveItem:d=>moveForm('i',d.id),moveShip:d=>moveForm('s',d.id),doMove,editItemRow:d=>editItem(d.id),sync:()=>showSync(),
  syJoin(){const v=$('#sy_code').value.trim();if(!v)return $('#sy_code').focus();return syGo(v)},
  syNew(){const v=$('#sy_url').value.trim();if(!v)return $('#sy_url').focus();return syGo(v)},
  syNow(){SYNC.now();showSync('Syncing…')},
@@ -289,7 +361,7 @@ quick:()=>quick(),quickShip:()=>quickShip(),toggleShip:d=>{OPEN['s:'+d.id]=!OPEN
  delShip(d,el){two(el,()=>{S.ships=S.ships.filter(x=>x.id!==cs.id);closeM();persist()})},
  fill:(d,el)=>fillForm(el),pick:d=>addFound(PICKS[+d.i]),fpick:d=>applyForm(PICKS[+d.i]),wiki(){window.open('https://starcitizen.tools/index.php?search='+encodeURIComponent($('#f_name').value)+'&title=Special%3ASearch&go=Go','_blank','noopener')},
  save(){const g=k=>$('#f_'+k).value.trim();if(!g('name'))return $('#f_name').focus();
-  Object.assign(cur,{name:g('name'),cat:g('cat'),sub:g('sub'),mfr:g('mfr'),size:g('size'),grade:g('grade'),cls:g('cls'),rar:g('rar'),qty:Math.max(0,+g('qty')||0),loc:g('loc'),notes:g('notes')});
+  Object.assign(cur,{name:g('name'),cat:g('cat'),sub:g('sub'),mfr:g('mfr'),size:g('size'),grade:g('grade'),cls:g('cls'),rar:g('rar'),qty:Math.max(0,+g('qty')||0),loc:canonLoc(g('loc')),notes:g('notes')});
   if(isNew){cur.id=uid();cur.t=Date.now();S.items.push(cur)}else{const k=S.items.findIndex(x=>x.id===cur.id);if(k>=0)S.items[k]=cur}closeM();persist()},
  del(d,el){two(el,()=>{S.items=S.items.filter(x=>x.id!==cur.id);closeM();persist()})},
  newBuild:()=>editBuild(),editBuild:d=>editBuild(d.id),
@@ -317,7 +389,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t.dataset.k)cb.slots[t
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();if(e.key==='Enter'){if(e.target.id==='qa')quick();else if(e.target.id==='sq')quickShip();else if(e.target.id==='f_name'){e.preventDefault();fillForm(document.querySelector('[data-act=fill]'))}}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.classList&&d.classList.contains('grp'))OPEN[d.dataset.k]=d.open},true);
 $('#fcls').innerHTML='<option value="">All classes</option>'+opts(CLS);$('#frar').innerHTML='<option value="">All rarities</option>'+opts(RAR);
-$('#q').oninput=e=>{F.q=e.target.value;vault()};$('#fcls').onchange=e=>{F.cls=e.target.value;vault()};$('#frar').onchange=e=>{F.rar=e.target.value;vault()};$('#fsort').onchange=e=>{F.sort=e.target.value;vault()};$('#fsh').onchange=()=>fleet();$('#fequ').onchange=e=>{F.equ=e.target.value;vault()};
+$('#q').oninput=e=>{F.q=e.target.value;vault()};$('#fcls').onchange=e=>{F.cls=e.target.value;vault()};$('#frar').onchange=e=>{F.rar=e.target.value;vault()};$('#fsort').onchange=e=>{F.sort=e.target.value;vault()};$('#floc').onchange=e=>{F.loc=e.target.value;vault()};$('#lq').oninput=()=>locsView();try{$('#qloc').value=localStorage.getItem('scv_qloc')||''}catch(e){}$('#qloc').oninput=e=>{try{localStorage.setItem('scv_qloc',e.target.value)}catch(x){}};$('#fsh').onchange=()=>fleet();$('#fequ').onchange=e=>{F.equ=e.target.value;vault()};
 render();
 // ---- Star Citizen Wiki lookups, straight from the browser (port of the old local helper) ----
 const WIKI=(()=>{
