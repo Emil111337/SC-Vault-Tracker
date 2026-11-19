@@ -24,7 +24,7 @@ main{padding:0 20px 50px;max-width:1500px;margin:auto}
 #stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:16px 0 4px}
 .stat{padding:8px 14px;border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--panel)}
 .stat b{display:block;font-size:22px;color:var(--acc)}.stat span{font-size:11px;letter-spacing:.22em;color:var(--dim)}
-#cats{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}#cats button{display:flex;align-items:center;gap:6px}#cats svg{width:16px;height:16px}#cats em{font-style:normal;color:var(--dim)}
+#cats,#who{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}#cats button,#who button{display:flex;align-items:center;gap:6px}#cats svg{width:16px;height:16px}#cats em,#who em{font-style:normal;color:var(--dim)}
 .bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
 input,select,textarea{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:8px 10px;font:inherit;border-radius:0}
 input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{flex:1 1 220px}
@@ -88,14 +88,19 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
 .lc.un{border-color:#ffb347}.lc.un>summary{color:#ffb347}
 .lr{display:flex;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid var(--line)}.lr .rd{width:8px;height:8px;border-radius:50%;flex:none;background:var(--r,#3cc8ff)}
 .lr .ln{flex:1;min-width:0;cursor:pointer}.lr .ln:hover{color:var(--acc)}.lr small{color:var(--dim);margin-left:6px}.lr b{font:700 12px Orbitron,sans-serif;color:var(--acc)}.lr button{padding:2px 9px;font-size:11px}
+
+.av{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--c,#3cc8ff);color:#04141f;font:700 10px Orbitron,sans-serif;margin-left:6px;vertical-align:1px;flex:none;letter-spacing:0}
+#who .av,#meb .av,.lr .av{margin:0 6px 0 0}#meb{display:inline-flex;align-items:center}#who:empty{display:none}
+.pal{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--c)}.sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--c)}
 </style></head><body>
 <header>
  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 7l4.5 2.5v5L12 17l-4.5-2.5v-5z"/></svg><div><b>RARE LOOT VAULT</b><small>PERSONAL INVENTORY // MOBIGLAS</small></div></div>
  <nav><button data-t="vault">VAULT</button><button data-t="fleet">FLEET</button><button data-t="locs">LOCATIONS</button><button data-t="builds">BUILDS</button></nav>
- <div class="acts"><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="sync" id="syncb"><i class="dot off"></i>SYNC</button><button data-act="data">DATA</button></div>
+ <div class="acts"><button class="pri" data-act="add">+ ADD ITEM</button><button data-act="me" id="meb">PROFILE</button><button data-act="sync" id="syncb"><i class="dot off"></i>SYNC</button><button data-act="data">DATA</button></div>
 </header>
 <main>
  <div id="stats"></div>
+ <div id="who"></div>
  <section id="vault">
   <div class="qa"><input id="qa" placeholder="Type an item name (e.g. Umbra) and press Enter to look it up and add it…"><input id="qloc" list="locdl" autocomplete="off" placeholder="Stored at (optional)" style="flex:0 0 210px"><button class="pri" id="qab" data-act="quick">FIND &amp; ADD</button></div><div id="msg"></div>
   <div id="cats"></div>
@@ -130,21 +135,47 @@ const RAR=['Uncommon','Rare','Very Rare','Legendary'],RC={'Uncommon':'#5fd36b','
 const CLS=['Military','Stealth','Industrial','Competition','Civilian'],SLOTSUBS=[...CATS['Components'],...CATS['Ship Weapons'],...CATS['Missiles']];
 const opts=(a,v)=>a.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-let S={items:[],builds:[],ships:[]},F={cat:'All',q:'',cls:'',rar:'',loc:'',equ:'',sort:'rar'},tab='vault',ref=null,tm,cur,isNew,cb,cbNew;
+let S={items:[],builds:[],ships:[]},F={cat:'All',q:'',cls:'',rar:'',loc:'',own:'',equ:'',sort:'rar'},tab='vault',ref=null,tm,cur,isNew,cb,cbNew;
 try{const c=localStorage.getItem('scvault');if(c)S=JSON.parse(c)}catch(e){}
-const norm=()=>{S.items=S.items||[];S.builds=S.builds||[];S.ships=S.ships||[];const ids=new Set(S.items.map(i=>i.id));S.ships.forEach(h=>{h.slots=h.slots||[];h.slots.forEach(s=>{if(s.item&&!ids.has(s.item))s.item=null})})};
-function persist(){try{localStorage.setItem('scvault',JSON.stringify(S))}catch(e){say('Could not save in this browser (storage full or blocked).',1)}SYNC.touch();render()}
-const own=(b,s)=>S.items.filter(i=>i.sub===s.sub&&(!s.size||String(i.size||'').toLowerCase()===s.size.toLowerCase())&&(!b.cls||i.cls===b.cls));
+const norm=()=>{S.items=S.items||[];S.players=S.players||[];S.builds=S.builds||[];S.ships=S.ships||[];const ids=new Set(S.items.map(i=>i.id));S.ships.forEach(h=>{h.slots=h.slots||[];h.slots.forEach(s=>{if(s.item&&!ids.has(s.item))s.item=null})})};
+function persist(){ensureMe();try{localStorage.setItem('scvault',JSON.stringify(S))}catch(e){say('Could not save in this browser (storage full or blocked).',1)}SYNC.touch();render()}
+const own=(b,s)=>vis(S.items).filter(i=>i.sub===s.sub&&(!s.size||String(i.size||'').toLowerCase()===s.size.toLowerCase())&&(!b.cls||i.cls===b.cls));
 const have=(b,s)=>own(b,s).reduce((n,i)=>n+(+i.qty||0),0);
 const missing=b=>b.slots.reduce((n,s)=>n+Math.max(0,s.qty-have(b,s)),0);
 const openM=()=>$('#modal').classList.add('open'),closeM=()=>$('#modal').classList.remove('open');
 function render(){
- norm();const I=S.items;
- $('#stats').innerHTML=[['Entries',I.length],['Total units',I.reduce((n,i)=>n+(+i.qty||0),0)],['Legendary',I.filter(i=>i.rar==='Legendary').length],['Ships',S.ships.length],['Builds ready',S.builds.filter(b=>b.slots.length&&!missing(b)).length+'/'+S.builds.length]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k.toUpperCase()}</span></div>`).join('');
+ norm();whoBar();const I=vis(S.items);
+ $('#stats').innerHTML=[['Entries',I.length],['Total units',I.reduce((n,i)=>n+(+i.qty||0),0)],['Legendary',I.filter(i=>i.rar==='Legendary').length],['Ships',vis(S.ships).length],['Builds ready',S.builds.filter(b=>b.slots.length&&!missing(b)).length+'/'+S.builds.length]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k.toUpperCase()}</span></div>`).join('');
  $('#vault').hidden=tab!=='vault';$('#builds').hidden=tab!=='builds';$('#fleet').hidden=tab!=='fleet';$('#locsec').hidden=tab!=='locs';locList();
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
  tab==='vault'?vault():tab==='fleet'?fleet():tab==='locs'?locsView():builds();
 }
+const PCOL=['#3cc8ff','#ff8a3c','#5fd36b','#e24ff0','#ffd83c','#ff5a7a','#9aa8ff','#7be0c3'];
+let ME=null,PCUR='',PFIRST=false;try{ME=JSON.parse(localStorage.getItem('scv_me')||'null')}catch(e){}
+const pl=id=>id?(S.players||[]).find(p=>p.id===id):null;
+const ini=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
+const avatar=id=>{const p=pl(id);return p?`<span class="av" style="--c:${esc(p.color)}" title="${esc(p.name)}">${esc(ini(p.name))}</span>`:''};
+const vis=L=>F.own?L.filter(o=>F.own==='__none'?!pl(o.owner):o.owner===F.own):L;
+const ownOpts=v=>'<option value="">Nobody (untagged)</option>'+(S.players||[]).map(p=>`<option value="${esc(p.id)}"${p.id===v?' selected':''}>${esc(p.name)}${ME&&p.id===ME.id?' (you)':''}</option>`).join('');
+const myId=()=>ME?ME.id:'';
+function ensureMe(){if(!ME)return false;S.players=S.players||[];if(S.players.some(p=>p.id===ME.id))return false;S.players.push({id:ME.id,name:ME.name,color:ME.color,t:Date.now()});return true}
+function whoBar(){
+ const P=S.players||[],el=$('#who');
+ $('#meb').innerHTML=ME?`<span class="av" style="--c:${esc(ME.color)}">${esc(ini(ME.name))}</span>${esc(ME.name)}`:'PROFILE';
+ if(P.length<2){el.innerHTML='';F.own='';return}
+ if(F.own&&F.own!=='__none'&&!pl(F.own))F.own='';
+ const cnt=id=>S.items.filter(i=>i.owner===id).length+S.ships.filter(x=>x.owner===id).length,un=S.items.filter(i=>!pl(i.owner)).length+S.ships.filter(x=>!pl(x.owner)).length;
+ el.innerHTML=`<button class="${F.own?'':'on'}" data-w="">EVERYONE <em>${S.items.length+S.ships.length}</em></button>`+P.map(p=>`<button class="${F.own===p.id?'on':''}" data-w="${esc(p.id)}">${avatar(p.id)}${esc(p.name.toUpperCase())}${ME&&p.id===ME.id?' (YOU)':''} <em>${cnt(p.id)}</em></button>`).join('')+(un?`<button class="${F.own==='__none'?'on':''}" data-w="__none">UNTAGGED <em>${un}</em></button>`:'')}
+function showProfile(first){
+ PFIRST=!!first;const un=S.items.filter(i=>!pl(i.owner)).length+S.ships.filter(x=>!pl(x.owner)).length,used=new Set((S.players||[]).filter(x=>!ME||x.id!==ME.id).map(x=>x.color));
+ PCUR=ME?ME.color:(PCOL.find(c=>!used.has(c))||PCOL[0]);
+ $('#box').innerHTML=`<h2>${ME?'YOUR PLAYER PROFILE':'WHO ARE YOU?'}</h2><p class="dim">When a vault is shared, every item and ship you add is tagged with your name and colour, so both of you can see whose is whose.</p><div class="fm"><label class="w">YOUR NAME<input id="me_name" maxlength="24" placeholder="Your in-game handle" value="${esc(ME?ME.name:'')}"></label><div class="w"><span class="dim">COLOUR</span><div class="pal">${PCOL.map(c=>`<i class="sw${c===PCUR?' on':''}" data-act="meCol" data-col="${c}" style="--c:${c}"></i>`).join('')}</div></div>${un?`<div class="w dim"><input type="checkbox" id="me_claim" ${!ME||first?'checked':''} style="width:auto;margin-right:8px">Mark my ${un} untagged entr${un===1?'y':'ies'} as mine</div>`:''}</div><div class="row"><span></span><button data-act="close">CANCEL</button><button class="pri" data-act="meSave">SAVE</button></div>`;openM();$('#me_name').focus()}
+function meSave(){
+ const name=$('#me_name').value.trim().slice(0,24);if(!name)return $('#me_name').focus();
+ const id=ME?ME.id:'p'+uid();ME={id,name,color:PCUR};try{localStorage.setItem('scv_me',JSON.stringify(ME))}catch(e){}
+ S.players=S.players||[];const k=S.players.findIndex(x=>x.id===id),rec={id,name,color:PCUR,t:k>=0?S.players[k].t:Date.now()};if(k>=0)S.players[k]=rec;else S.players.push(rec);
+ const cl=$('#me_claim');if(cl&&cl.checked){S.items.forEach(i=>{if(!pl(i.owner))i.owner=id});S.ships.forEach(x=>{if(!pl(x.owner))x.owner=id})}
+ closeM();persist();if(PFIRST&&SYNC.status().on)showSync('Profile saved. Your friend can join with the code below.')}
 const PLACES=[['Lorville','Hurston','City'],['Teasa Spaceport','Hurston','Spaceport'],['Everus Harbor','Hurston','Station'],['Hurston','Hurston','Planet'],['Arial','Hurston','Moon'],['Aberdeen','Hurston','Moon'],['Magda','Hurston','Moon'],['Ita','Hurston','Moon'],
 ['Orison','Crusader','City'],['August Dunlow Spaceport','Crusader','Spaceport'],['Seraphim Station','Crusader','Station'],['Crusader','Crusader','Planet'],['Cellin','Crusader','Moon'],['Daymar','Crusader','Moon'],['Yela','Crusader','Moon'],['Grim HEX','Crusader','Station'],
 ['Area18','ArcCorp','City'],['Riker Memorial Spaceport','ArcCorp','Spaceport'],['Baijini Point','ArcCorp','Station'],['ArcCorp','ArcCorp','Planet'],['Lyria','ArcCorp','Moon'],['Wala','ArcCorp','Moon'],
@@ -168,18 +199,18 @@ function locList(){const u=usedLocs(),sig=[...u.keys()].sort().join('|');if(sig=
  const ctx=n=>{const p=PBY.get(locKey(n));return p?p[1]+' · '+p[2]:'your own place'};
  $('#locdl').innerHTML=[...[...u.values()].sort((a,b)=>b.items+b.ships-a.items-a.ships).map(e=>[e.name,'in your vault · '+ctx(e.name)]),...PLACES.filter(p=>!u.has(locKey(p[0]))).map(p=>[p[0],p[1]+' · '+p[2]])].map(([v,l])=>`<option value="${esc(v)}" label="${esc(l)}"></option>`).join('')}
 const PIN='<svg viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
-const stackKey=i=>[i.name,i.cat,i.sub,i.size,i.grade,i.cls,i.mfr,i.rar,i.slug].map(x=>String(x||'').toLowerCase()).join('|');
+const stackKey=i=>[i.name,i.cat,i.sub,i.size,i.grade,i.cls,i.mfr,i.rar,i.slug,i.owner].map(x=>String(x||'').toLowerCase()).join('|');
 function locsView(){
  const q=($('#lq').value||'').trim().toLowerCase(),m=new Map(),slot=l=>{const k=locKey(l);let e=m.get(k);if(!e){e={key:k,name:k?locName(l):'No location set',items:[],ships:[]};m.set(k,e)}return e};
  const hit=t=>!q||t.toLowerCase().includes(q);
- S.items.filter(i=>hit([i.name,i.mfr,i.sub,i.size,i.notes].join(' '))).forEach(i=>slot(i.loc).items.push(i));
- S.ships.filter(s=>hit([shipName(s),s.name,s.mfr,s.role,s.notes].join(' '))).forEach(s=>slot(s.loc).ships.push(s));
- const all=[...m.values()],un=all.find(e=>!e.key),placed=all.filter(e=>e.key),total=S.items.filter(i=>!locKey(i.loc)).length+S.ships.filter(s=>!locKey(s.loc)).length;
+ vis(S.items).filter(i=>hit([i.name,i.mfr,i.sub,i.size,i.notes].join(' '))).forEach(i=>slot(i.loc).items.push(i));
+ vis(S.ships).filter(s=>hit([shipName(s),s.name,s.mfr,s.role,s.notes].join(' '))).forEach(s=>slot(s.loc).ships.push(s));
+ const all=[...m.values()],un=all.find(e=>!e.key),placed=all.filter(e=>e.key),total=vis(S.items).filter(i=>!locKey(i.loc)).length+vis(S.ships).filter(s=>!locKey(s.loc)).length;
  $('#lsum').innerHTML=(q?'Showing places that hold “'+esc(q)+'”: ':'')+placed.length+' place'+(placed.length===1?'':'s')+(total&&!q?' · <b style="color:#ffb347">'+total+' entr'+(total===1?'y':'ies')+' without a location</b>':'');
  const card=e=>{const rows=e.items.length+e.ships.length,units=e.items.reduce((n,i)=>n+(+i.qty||0),0),k='l:'+(e.key||'none'),op=q?true:OPEN[k]!==undefined?OPEN[k]:rows<=6||!e.key,pl=PBY.get(e.key);
   return `<details class="grp lc${e.key?'':' un'}" data-k="${esc(k)}"${op?' open':''}><summary><span class="pn">${PIN}</span>${esc(e.name.toUpperCase())}${pl?`<span class="kd">${esc(pl[2])}</span>`:''}<em>${[e.items.length?e.items.length+' item'+(e.items.length===1?'':'s')+' · '+units+' unit'+(units===1?'':'s'):'',e.ships.length?e.ships.length+' ship'+(e.ships.length===1?'':'s'):''].filter(Boolean).join(' · ')}</em></summary>`+
-   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i><span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span><button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
-   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i><span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span><b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
+   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i>${avatar(s.owner)}<span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span><button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
+   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i>${avatar(i.owner)}<span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span><b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
  const areaOf=e=>{const p=PBY.get(e.key);return p?p[1]:'Your own places'},groups=new Map();
  placed.forEach(e=>{const a=areaOf(e);if(!groups.has(a))groups.set(a,[]);groups.get(a).push(e)});
  const order=[...AREAS,'Your own places'].filter(a=>groups.has(a));
@@ -189,21 +220,23 @@ function locsView(){
  $('#lgrid').innerHTML=out||`<div class="empty" style="grid-column:1/-1"><h3 class="orb">${q?'NOTHING FOUND':'NOTHING STORED YET'}</h3>${q?'No item or ship matches that name.':'Give your items a location (STORED AT) and they will show up here, grouped by place.'}</div>`}
 let mv=null;
 function moveForm(kind,id){
- const o=(kind==='i'?S.items:S.ships).find(x=>x.id===id);if(!o)return;mv={kind,id};const it=kind==='i',q=it?(+o.qty||0):1;
- $('#box').innerHTML=`<h2>MOVE ${it?'ITEM':'SHIP'}</h2><p class="dim"><b>${esc(it?o.name:shipName(o))}</b>${it?' ×'+q:''} is at <b>${esc(o.loc||'no location set')}</b>.</p><div class="fm">${it&&q>1?`<label>HOW MANY TO MOVE<input id="mv_n" type="number" min="1" max="${q}" value="${q}"></label>`:''}<label class="w">MOVE TO<input id="mv_to" list="locdl" autocomplete="off" placeholder="Start typing a station, city, moon…"></label></div><div class="row"><span></span><button data-act="close">CANCEL</button><button class="pri" data-act="doMove">MOVE</button></div>`;openM();$('#mv_to').focus()}
+ const o=(kind==='i'?S.items:S.ships).find(x=>x.id===id);if(!o)return;mv={kind,id};const it=kind==='i',q=it?(+o.qty||0):1,pn=(S.players||[]).length>1;
+ $('#box').innerHTML=`<h2>MOVE ${it?'ITEM':'SHIP'}</h2><p class="dim"><b>${esc(it?o.name:shipName(o))}</b>${it?' ×'+q:''} is at <b>${esc(o.loc||'no location set')}</b>${pl(o.owner)?' and belongs to <b>'+esc(pl(o.owner).name)+'</b>':''}.</p><div class="fm">${it&&q>1?`<label>HOW MANY TO MOVE<input id="mv_n" type="number" min="1" max="${q}" value="${q}"></label>`:''}<label class="w">MOVE TO<input id="mv_to" list="locdl" autocomplete="off" placeholder="Start typing a station, city, moon…" value="${esc(o.loc||'')}"></label>${pn?`<label class="w">BELONGS TO (change it to hand it over)<select id="mv_own">${ownOpts(o.owner||'')}</select></label>`:''}</div><div class="row"><span></span><button data-act="close">CANCEL</button><button class="pri" data-act="doMove">MOVE</button></div>`;openM();$('#mv_to').focus();$('#mv_to').select()}
 function doMove(){
- const to=canonLoc($('#mv_to').value);if(!to)return $('#mv_to').focus();
  const o=(mv.kind==='i'?S.items:S.ships).find(x=>x.id===mv.id);if(!o){closeM();return}
- if(mv.kind==='s'){o.loc=to;closeM();persist();return}
- const q=+o.qty||0,n=Math.min(q,Math.max(1,Math.trunc(+($('#mv_n')||{value:q}).value)||q)),dest=S.items.find(x=>x!==o&&locKey(x.loc)===locKey(to)&&stackKey(x)===stackKey(o));
+ const to=canonLoc($('#mv_to').value),ow=$('#mv_own')?$('#mv_own').value:(o.owner||''),sameOwner=ow===(o.owner||''),sameLoc=locKey(to)===locKey(o.loc);
+ if(!to&&sameOwner)return $('#mv_to').focus();
+ if(sameOwner&&sameLoc){closeM();return}
+ if(mv.kind==='s'){o.loc=to;o.owner=ow;closeM();persist();return}
+ const q=+o.qty||0,n=Math.min(q,Math.max(1,Math.trunc(+($('#mv_n')||{value:q}).value)||q)),probe={...o,owner:ow},dest=S.items.find(x=>x!==o&&locKey(x.loc)===locKey(to)&&stackKey(x)===stackKey(probe));
  if(n>=q){
-  if(dest){dest.qty=(+dest.qty||0)+q;S.ships.forEach(h=>(h.slots||[]).forEach(s=>{if(s.item===o.id)s.item=dest.id}));S.items=S.items.filter(x=>x!==o)}
-  else o.loc=to}
- else{o.qty=q-n;if(dest)dest.qty=(+dest.qty||0)+n;else S.items.push({...o,id:uid(),t:Date.now(),qty:n,loc:to})}
+  if(dest){dest.qty=(+dest.qty||0)+q;S.ships.forEach(x=>(x.slots||[]).forEach(s=>{if(s.item===o.id)s.item=dest.id}));S.items=S.items.filter(x=>x!==o)}
+  else{o.loc=to;o.owner=ow}}
+ else{o.qty=q-n;if(dest)dest.qty=(+dest.qty||0)+n;else S.items.push({...o,id:uid(),t:Date.now(),qty:n,loc:to,owner:ow})}
  closeM();persist()}
-function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span>${i.loc?'▸ '+esc(i.loc):''}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
+function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}${avatar(i.owner)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span>${i.loc?'▸ '+esc(i.loc):''}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
 function vault(){
- const I=S.items,q=F.q.toLowerCase();
+ const I=vis(S.items),q=F.q.toLowerCase();
  $('#cats').innerHTML=['All',...Object.keys(CATS)].map(c=>`<button class="${F.cat===c?'on':''}" data-c="${c}">${c==='All'?'':ico(c)}${c.toUpperCase()} <em>${c==='All'?I.length:I.filter(i=>i.cat===c).length}</em></button>`).join('');
  $('#floc').innerHTML='<option value="">All locations</option><option value="__none">No location set</option>'+[...usedLocs().values()].sort((a,b)=>a.name.localeCompare(b.name)).map(e=>`<option value="${esc(e.key)}">${esc(e.name)} (${e.items+e.ships})</option>`).join('');if(F.loc&&F.loc!=='__none'&&!usedLocs().has(F.loc))F.loc='';$('#floc').value=F.loc||'';
  const L=I.filter(i=>(F.cat==='All'||i.cat===F.cat)&&(!F.cls||i.cls===F.cls)&&(!F.rar||i.rar===F.rar)&&(!F.loc||(F.loc==='__none'?!locKey(i.loc):locKey(i.loc)===F.loc))&&(!F.equ||(F.equ==='eq')===(fitted(i.id).length>0))&&(!q||[i.name,i.mfr,i.loc,i.notes,i.sub,i.size].join(' ').toLowerCase().includes(q)));
@@ -218,8 +251,8 @@ function builds(){
  $('#blist').innerHTML=S.builds.length?S.builds.map(b=>{const m=missing(b);return `<div class="bcard"><div class="bh"><h3>${esc(b.name)}</h3>${b.cls?`<span class="chip">${esc(b.cls)}</span>`:''}<span class="orb ${m?'miss':'ok'}">${m?m+' TO BUY':'READY'}</span><button data-act="editBuild" data-id="${b.id}">EDIT</button></div>${b.slots.map(s=>{const h=have(b,s),o=own(b,s),ok=h>=s.qty;return `<div class="slot"><b class="${ok?'ok':'miss'}">${ok?'✓':'✗'}</b><div>${esc(s.sub)} ${esc(s.size)} ×${s.qty}<small>${o.map(i=>esc(i.name)+' ×'+i.qty).join(', ')||'nothing owned yet'}</small></div><span class="orb ${ok?'ok':'miss'}">${ok?'OK':'BUY '+(s.qty-h)}</span></div>`}).join('')}</div>`}).join(''):'<div class="empty"><h3 class="orb">NO BUILDS YET</h3>Create a build (for example a stealth ship) and list the slots it needs.</div>';
 }
 function editItem(id){
- const f=id&&S.items.find(i=>i.id===id);cur=f?{...f}:{cat:'Components',sub:'Power Plant',rar:'Rare',qty:1};isNew=!f;const it=cur;
- $('#box').innerHTML=`<h2>${f?'EDIT ITEM':'NEW ITEM'}</h2><div class="fm"><label class="w">NAME<span style="display:flex;gap:6px"><input id="f_name" style="flex:1" placeholder="Type a name, then LOOK UP" value="${esc(it.name)}"><button data-act="fill">LOOK UP</button><button data-act="wiki" title="Search starcitizen.tools">WIKI ↗</button></span></label><div class="w dim" id="fmsg"></div><label>CATEGORY<select id="f_cat">${opts(Object.keys(CATS),it.cat)}</select></label><label>TYPE<select id="f_sub"></select></label><label>MANUFACTURER<input id="f_mfr" value="${esc(it.mfr)}"></label><label>SIZE<input id="f_size" placeholder="S1, S2, S3…" value="${esc(it.size)}"></label><label>GRADE<select id="f_grade">${opts(['','A','B','C','D'],it.grade||'')}</select></label><label>CLASS<select id="f_cls">${opts(['',...CLS],it.cls||'')}</select></label><label>RARITY<select id="f_rar">${opts(RAR,it.rar)}</select></label><label>QUANTITY<input id="f_qty" type="number" min="0" value="${it.qty==null?1:it.qty}"></label><label class="w">STORED AT<input id="f_loc" list="locdl" autocomplete="off" placeholder="Start typing: Lorville, Port Tressler, a ship…" value="${esc(it.loc)}"></label><label class="w">NOTES<textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label></div><div class="row">${f?'<button class="danger" data-act="del">DELETE</button>':''}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="save">SAVE</button></div>`;
+ const f=id&&S.items.find(i=>i.id===id);cur=f?{...f}:{cat:'Components',sub:'Power Plant',rar:'Rare',qty:1,owner:myId()};isNew=!f;const it=cur;
+ $('#box').innerHTML=`<h2>${f?'EDIT ITEM':'NEW ITEM'}</h2><div class="fm"><label class="w">NAME<span style="display:flex;gap:6px"><input id="f_name" style="flex:1" placeholder="Type a name, then LOOK UP" value="${esc(it.name)}"><button data-act="fill">LOOK UP</button><button data-act="wiki" title="Search starcitizen.tools">WIKI ↗</button></span></label><div class="w dim" id="fmsg"></div><label>CATEGORY<select id="f_cat">${opts(Object.keys(CATS),it.cat)}</select></label><label>TYPE<select id="f_sub"></select></label><label>MANUFACTURER<input id="f_mfr" value="${esc(it.mfr)}"></label><label>SIZE<input id="f_size" placeholder="S1, S2, S3…" value="${esc(it.size)}"></label><label>GRADE<select id="f_grade">${opts(['','A','B','C','D'],it.grade||'')}</select></label><label>CLASS<select id="f_cls">${opts(['',...CLS],it.cls||'')}</select></label><label>RARITY<select id="f_rar">${opts(RAR,it.rar)}</select></label><label>QUANTITY<input id="f_qty" type="number" min="0" value="${it.qty==null?1:it.qty}"></label>${(S.players||[]).length?`<label>OWNER<select id="f_own">${ownOpts(it.owner||'')}</select></label>`:''}<label class="w">STORED AT<input id="f_loc" list="locdl" autocomplete="off" placeholder="Start typing: Lorville, Port Tressler, a ship…" value="${esc(it.loc)}"></label><label class="w">NOTES<textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label></div><div class="row">${f?'<button class="danger" data-act="del">DELETE</button>':''}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="save">SAVE</button></div>`;
  const sub=()=>{const L=CATS[$('#f_cat').value].slice();if(it.sub&&!L.includes(it.sub))L.push(it.sub);$('#f_sub').innerHTML=opts(L,it.sub)};sub();$('#f_cat').onchange=sub;openM();
 }
 function grab(){cb.name=$('#b_name').value;cb.cls=$('#b_cls').value}
@@ -236,8 +269,8 @@ async function search(q){if(q.trim().length<2)throw'Type at least 2 characters.'
 const desc=d=>[d.sub,d.size,d.grade&&'Grade '+d.grade,d.cls,d.mfr].filter(Boolean).join(' · ');
 const picker=(r,act)=>'Several matches, pick one:<div class="picks">'+r.map((d,i)=>`<button data-act="${act}" data-i="${i}">${esc(d.name)} <small>${esc(desc(d))}</small></button>`).join('')+'</div>';
 function addFound(d){
- const loc=canonLoc($('#qloc').value),ex=S.items.find(i=>(i.slug?i.slug===d.slug:i.name.toLowerCase()===d.name.toLowerCase())&&locKey(i.loc)===locKey(loc));
- if(ex)ex.qty=(+ex.qty||0)+1;else S.items.push({id:uid(),t:Date.now(),name:d.name,cat:d.cat,sub:d.sub,mfr:d.mfr,size:d.size,grade:d.grade,cls:d.cls,rar:d.rar,qty:1,loc,notes:'',src:'wiki',slug:d.slug,craft:d.craft});
+ const loc=canonLoc($('#qloc').value),ex=S.items.find(i=>(i.slug?i.slug===d.slug:i.name.toLowerCase()===d.name.toLowerCase())&&locKey(i.loc)===locKey(loc)&&(i.owner||'')===myId());
+ if(ex)ex.qty=(+ex.qty||0)+1;else S.items.push({id:uid(),t:Date.now(),name:d.name,cat:d.cat,sub:d.sub,mfr:d.mfr,size:d.size,grade:d.grade,cls:d.cls,rar:d.rar,qty:1,loc,owner:myId(),notes:'',src:'wiki',slug:d.slug,craft:d.craft});
  $('#qa').value='';persist();say((ex?'Quantity +1: ':'Added: ')+d.name+' · '+desc(d)+(loc?' · at '+loc:'')+' · from the Star Citizen Wiki');
 }
 async function quick(){
@@ -291,11 +324,11 @@ const isOpen=h=>!!OPEN['s:'+h.id];
 function shipCard(h){
  const sl=h.slots||[],fl=sl.filter(s=>s.item).length,r=shipRar(h),op=isOpen(h),nm=shipName(h);
  const sum=CHIPS.map(([t,l])=>{const L=sl.filter(s=>s.type===t);if(!L.length)return '';const f=L.filter(s=>s.item).length,z=[...new Set(L.map(s=>s.size).filter(Boolean))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));return `<span class="${f?'on':''}" title="${L.length} slot${L.length>1?'s':''}${f?', '+f+' fitted from your vault':''}">${l}<b>${esc(z.join(' / ')||'–')}</b></span>`}).join('')+(+h.cargo>0?`<span>Cargo<b>${+h.cargo} SCU</b></span>`:'');
- return `<article class="scard" style="--r:${shipCol(h)}"><div class="sh" data-act="toggleShip" data-id="${h.id}"><div class="ic">${ico('Ships')}</div><div><h3>${esc(nm)}</h3><div class="m">${esc([h.nick&&h.name,h.mfr,h.role,h.size&&'Size '+h.size].filter(Boolean).join(' · '))}</div></div><div class="rt"><span class="chip">${esc(r||'Unpriced')}</span>${h.msrp?`<span class="px">$${(+h.msrp).toLocaleString('en-US')}</span>`:''}</div></div><div class="sum">${sum}</div><div class="bar2"><span style="width:${sl.length?fl/sl.length*100:0}%"></span></div><div class="m">${sl.length} slots · ${fl} fitted from your vault, the rest stock${h.loc?' · ▸ '+esc(h.loc):''}</div>${h.notes?`<div class="m">${esc(h.notes)}</div>`:''}<div class="sbtns"><button class="tg" data-act="toggleShip" data-id="${h.id}">${op?'▴ HIDE COMPONENTS':'▾ COMPONENTS'}</button><button data-act="editShip" data-id="${h.id}">EDIT SHIP</button></div>${op?`<div class="comp"><div class="slots">${slotGroups(h)}</div>${h.slug?`<div class="sbtns"><button data-act="refreshShip" data-id="${h.id}" title="Re-read the default loadout and price from the wiki">↻ REFRESH SLOTS</button></div>`:''}</div>`:''}</article>`}
+ return `<article class="scard" style="--r:${shipCol(h)}"><div class="sh" data-act="toggleShip" data-id="${h.id}"><div class="ic">${ico('Ships')}</div><div><h3>${esc(nm)}${avatar(h.owner)}</h3><div class="m">${esc([h.nick&&h.name,h.mfr,h.role,h.size&&'Size '+h.size].filter(Boolean).join(' · '))}</div></div><div class="rt"><span class="chip">${esc(r||'Unpriced')}</span>${h.msrp?`<span class="px">$${(+h.msrp).toLocaleString('en-US')}</span>`:''}</div></div><div class="sum">${sum}</div><div class="bar2"><span style="width:${sl.length?fl/sl.length*100:0}%"></span></div><div class="m">${sl.length} slots · ${fl} fitted from your vault, the rest stock${h.loc?' · ▸ '+esc(h.loc):''}</div>${h.notes?`<div class="m">${esc(h.notes)}</div>`:''}<div class="sbtns"><button class="tg" data-act="toggleShip" data-id="${h.id}">${op?'▴ HIDE COMPONENTS':'▾ COMPONENTS'}</button><button data-act="editShip" data-id="${h.id}">EDIT SHIP</button></div>${op?`<div class="comp"><div class="slots">${slotGroups(h)}</div>${h.slug?`<div class="sbtns"><button data-act="refreshShip" data-id="${h.id}" title="Re-read the default loadout and price from the wiki">↻ REFRESH SLOTS</button></div>`:''}</div>`:''}</article>`}
 function fleet(){
- const k=($('#fsh')||{}).value||'rar',R=h=>SRAR.indexOf(shipRar(h)),A=[...S.ships];
+ const k=($('#fsh')||{}).value||'rar',R=h=>SRAR.indexOf(shipRar(h)),A=[...vis(S.ships)];
  A.sort((a,b)=>k==='price'?(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)):k==='name'?shipName(a).localeCompare(shipName(b)):k==='size'?(+b.size||0)-(+a.size||0)||shipName(a).localeCompare(shipName(b)):k==='new'?(b.t||0)-(a.t||0):R(b)-R(a)||(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)));
- $('#fcount').textContent=S.ships.length?S.ships.length+' ship'+(S.ships.length>1?'s':'')+' · '+S.ships.reduce((n,h)=>n+(h.slots||[]).filter(s=>s.item).length,0)+' parts fitted from your vault':'';
+ const V=vis(S.ships);$('#fcount').textContent=V.length?V.length+' ship'+(V.length>1?'s':'')+' · '+V.reduce((n,h)=>n+(h.slots||[]).filter(s=>s.item).length,0)+' parts fitted from your vault':'';
  $('#sgrid').innerHTML=A.length?A.map(shipCard).join(''):'<div class="empty"><h3 class="orb">HANGAR EMPTY</h3>Type a ship name above to add it from the Star Citizen Wiki, or use + MANUAL.</div>'}
 async function quickShip(){
  const n=$('#sq').value.trim();if(!n)return;const b=$('#sqb');b.disabled=true;sayS('Looking up the ship on the Star Citizen Wiki…');
@@ -309,7 +342,7 @@ async function quickShip(){
 async function addShip(d){
  try{sayS('Loading '+d.name+' hardpoints…');const t=(await api('/api/ship?slug='+encodeURIComponent(d.slug))).ship;
   const slots=mkSlots(t.slots);
-  S.ships.push({id:uid(),t:Date.now(),name:t.name,nick:'',slug:t.slug,mfr:t.mfr,role:t.role,size:t.size,cargo:t.cargo,msrp:t.msrp||null,loc:'',notes:'',src:'wiki',sv:SV,slots});
+  S.ships.push({id:uid(),t:Date.now(),name:t.name,nick:'',slug:t.slug,mfr:t.mfr,role:t.role,size:t.size,cargo:t.cargo,msrp:t.msrp||null,loc:'',owner:myId(),notes:'',src:'wiki',sv:SV,slots});
   $('#sq').value='';persist();sayS('Added '+t.name+(slots.length?' with '+slots.length+' slots filled with the ship\u2019s default loadout from the wiki. Tap a slot to fit something from your vault.':'. The wiki had no hardpoint data for it, so press EDIT SHIP to add slots by hand.'));
  }catch(e){sayS(String(e.message||e),1)}
 }
@@ -332,22 +365,22 @@ async function migrateShips(){
  let n=0;for(const h of old)if(await refreshShip(h.id,true))n++;
  sayS(n?'Updated '+n+' ship'+(n>1?'s':'')+' with pledge prices.':'Could not update the old ship slots (is the wiki reachable?). They will be retried next time you open the vault.',!n)
 }
-function grabS(){cs.msrp=+$('#sh_px').value||null;cs.rarOv=$('#sh_rar').value;cs.name=$('#sh_name').value;cs.nick=$('#sh_nick').value;cs.loc=canonLoc($('#sh_loc').value);cs.notes=$('#sh_notes').value}
-function editShip(id){const f=id&&S.ships.find(x=>x.id===id);cs=f?JSON.parse(JSON.stringify(f)):{name:'',nick:'',mfr:'',role:'',size:'',loc:'',notes:'',slots:[]};csNew=!f;sform();openM()}
+function grabS(){cs.msrp=+$('#sh_px').value||null;cs.rarOv=$('#sh_rar').value;cs.name=$('#sh_name').value;cs.nick=$('#sh_nick').value;cs.loc=canonLoc($('#sh_loc').value);cs.owner=$('#sh_own')?$('#sh_own').value:(cs.owner||'');cs.notes=$('#sh_notes').value}
+function editShip(id){const f=id&&S.ships.find(x=>x.id===id);cs=f?JSON.parse(JSON.stringify(f)):{name:'',nick:'',mfr:'',role:'',size:'',loc:'',notes:'',owner:myId(),slots:[]};csNew=!f;sform();openM()}
 function sform(){const h=cs;
- $('#box').innerHTML=`<h2>${csNew?'NEW SHIP':'EDIT SHIP'}</h2><div class="fm"><label>SHIP MODEL<input id="sh_name" value="${esc(h.name)}"></label><label>YOUR NAME FOR IT<input id="sh_nick" placeholder="optional" value="${esc(h.nick)}"></label><label>LOCATION<input id="sh_loc" list="locdl" autocomplete="off" placeholder="Where it is parked" value="${esc(h.loc)}"></label><label>NOTES<input id="sh_notes" value="${esc(h.notes)}"></label><label>PLEDGE PRICE (USD)<input id="sh_px" type="number" min="0" placeholder="from the wiki" value="${esc(h.msrp||'')}"></label><label>RARITY<select id="sh_rar"><option value="">Auto (from price)</option>${opts(SRAR,h.rarOv||'')}</select></label></div><p class="dim">Component slots. Fix anything the wiki got wrong, or add your own.</p>${h.slots.map((s,i)=>`<div class="srow2"><select data-ss="${i}" data-sk="type">${opts(SLOTT,s.type)}</select><input data-ss="${i}" data-sk="size" placeholder="Size" value="${esc(s.size)}"><input data-ss="${i}" data-sk="label" placeholder="Label" value="${esc(s.label)}"><button data-act="rmSlotS" data-i="${i}">✕</button></div>`).join('')}<button data-act="addSlotS">+ SLOT</button><div class="row">${csNew?'':'<button class="danger" data-act="delShip">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveShip">SAVE</button></div>`}
+ $('#box').innerHTML=`<h2>${csNew?'NEW SHIP':'EDIT SHIP'}</h2><div class="fm"><label>SHIP MODEL<input id="sh_name" value="${esc(h.name)}"></label><label>YOUR NAME FOR IT<input id="sh_nick" placeholder="optional" value="${esc(h.nick)}"></label><label>LOCATION<input id="sh_loc" list="locdl" autocomplete="off" placeholder="Where it is parked" value="${esc(h.loc)}"></label>${(S.players||[]).length?`<label>OWNER<select id="sh_own">${ownOpts(h.owner||'')}</select></label>`:''}<label>NOTES<input id="sh_notes" value="${esc(h.notes)}"></label><label>PLEDGE PRICE (USD)<input id="sh_px" type="number" min="0" placeholder="from the wiki" value="${esc(h.msrp||'')}"></label><label>RARITY<select id="sh_rar"><option value="">Auto (from price)</option>${opts(SRAR,h.rarOv||'')}</select></label></div><p class="dim">Component slots. Fix anything the wiki got wrong, or add your own.</p>${h.slots.map((s,i)=>`<div class="srow2"><select data-ss="${i}" data-sk="type">${opts(SLOTT,s.type)}</select><input data-ss="${i}" data-sk="size" placeholder="Size" value="${esc(s.size)}"><input data-ss="${i}" data-sk="label" placeholder="Label" value="${esc(s.label)}"><button data-act="rmSlotS" data-i="${i}">✕</button></div>`).join('')}<button data-act="addSlotS">+ SLOT</button><div class="row">${csNew?'':'<button class="danger" data-act="delShip">DELETE</button>'}<span></span><button data-act="close">CANCEL</button><button class="pri" data-act="saveShip">SAVE</button></div>`}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.sk)cs.slots[t.dataset.ss][t.dataset.sk]=t.value});
 function openPicker(hid,sid){
  const h=S.ships.find(x=>x.id===hid),s=h&&h.slots.find(x=>x.id===sid);if(!s)return;PK={h:hid,s:sid};
  const c=S.items.filter(i=>i.sub===s.type).sort((a,b)=>(b.size===s.size)-(a.size===s.size)||RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)),cur=S.items.find(i=>i.id===s.item);
  const rows=c.map(i=>{const f=fitted(i.id),free=(+i.qty||0)-f.length,here=i.id===s.item,where=[...new Set(f.filter(x=>x.s!==s).map(x=>shipName(x.h)))].join(', ');
-  return `<div class="prow${here?' here':''}"><div><b>${esc(i.name)}</b><small>${esc([i.size,i.grade&&'Grade '+i.grade,i.cls,i.mfr].filter(Boolean).join(' · '))}${i.size&&s.size&&i.size!==s.size?' · size mismatch':''}</small><small>${here?'fitted here':free>0?free+' spare':'none spare'}${where?' · on '+esc(where):''}</small></div>${here?'<span class="orb ok">FITTED</span>':`<button data-act="equip" data-i="${i.id}">${free>0?'FIT':'MOVE HERE'}</button>`}</div>`}).join('');
+  return `<div class="prow${here?' here':''}"><div><b>${esc(i.name)}${avatar(i.owner)}</b><small>${esc([i.size,i.grade&&'Grade '+i.grade,i.cls,i.mfr].filter(Boolean).join(' · '))}${i.size&&s.size&&i.size!==s.size?' · size mismatch':''}</small><small>${here?'fitted here':free>0?free+' spare':'none spare'}${i.owner&&h.owner&&i.owner!==h.owner&&pl(i.owner)?' · belongs to '+esc(pl(i.owner).name):''}${where?' · on '+esc(where):''}</small></div>${here?'<span class="orb ok">FITTED</span>':`<button data-act="equip" data-i="${i.id}">${free>0?'FIT':'MOVE HERE'}</button>`}</div>`}).join('');
  const st=s.stock,hasSt=!!(st&&st.name),stl=hasSt?`<p class="dim">Stock part: <b>${esc(st.name)}</b>${[st.size,st.grade&&'Grade '+st.grade,st.cls,st.mfr].filter(Boolean).map(x=>' · '+esc(x)).join('')}</p>`:'',nt=s.note?`<p class="dim">Holds: ${esc(s.note)}</p>`:'';
  $('#box').innerHTML=`<h2>${esc(s.type)} ${esc(s.size)} · ${esc(shipName(h))}</h2><p class="dim">${esc(s.label||'')}${cur?' · fitted: '+esc(cur.name):hasSt?' · running the stock part':' · empty slot'}</p>${stl}${nt}${cur?`<button class="danger" data-act="unequip">${hasSt?'RESTORE STOCK PART':'UNEQUIP'}</button>`:''}<div style="margin-top:8px">${rows||'<div class="dim">You have no '+esc(s.type)+' in your vault yet. Add one on the Vault tab first.</div>'}</div><div class="row"><span></span><button data-act="close">CLOSE</button></div>`;openM()}
 function equip(id){const h=S.ships.find(x=>x.id===PK.h),s=h&&h.slots.find(x=>x.id===PK.s),it=S.items.find(i=>i.id===id);if(!s||!it)return;const f=fitted(id);if(f.length>=(+it.qty||0)){const o=f.find(x=>x.s!==s);if(o)o.s.item=null}s.item=id;closeM();persist()}
 const two=(el,fn,t)=>{if(el.dataset.s)fn();else{el.dataset.s=1;el.textContent=t||'CONFIRM?'}};
 const acts={
- add:()=>editItem(),close:closeM,moveItem:d=>moveForm('i',d.id),moveShip:d=>moveForm('s',d.id),doMove,editItemRow:d=>editItem(d.id),sync:()=>showSync(),
+ add:()=>editItem(),close:closeM,me:()=>showProfile(),meCol(d){PCUR=d.col;document.querySelectorAll('.sw').forEach(e=>e.classList.toggle('on',e.dataset.col===d.col))},meSave,moveItem:d=>moveForm('i',d.id),moveShip:d=>moveForm('s',d.id),doMove,editItemRow:d=>editItem(d.id),sync:()=>showSync(),
  syJoin(){const v=$('#sy_code').value.trim();if(!v)return $('#sy_code').focus();return syGo(v)},
  syNew(){const v=$('#sy_url').value.trim();if(!v)return $('#sy_url').focus();return syGo(v)},
  syNow(){SYNC.now();showSync('Syncing…')},
@@ -361,7 +394,7 @@ quick:()=>quick(),quickShip:()=>quickShip(),toggleShip:d=>{OPEN['s:'+d.id]=!OPEN
  delShip(d,el){two(el,()=>{S.ships=S.ships.filter(x=>x.id!==cs.id);closeM();persist()})},
  fill:(d,el)=>fillForm(el),pick:d=>addFound(PICKS[+d.i]),fpick:d=>applyForm(PICKS[+d.i]),wiki(){window.open('https://starcitizen.tools/index.php?search='+encodeURIComponent($('#f_name').value)+'&title=Special%3ASearch&go=Go','_blank','noopener')},
  save(){const g=k=>$('#f_'+k).value.trim();if(!g('name'))return $('#f_name').focus();
-  Object.assign(cur,{name:g('name'),cat:g('cat'),sub:g('sub'),mfr:g('mfr'),size:g('size'),grade:g('grade'),cls:g('cls'),rar:g('rar'),qty:Math.max(0,+g('qty')||0),loc:canonLoc(g('loc')),notes:g('notes')});
+  Object.assign(cur,{name:g('name'),cat:g('cat'),sub:g('sub'),mfr:g('mfr'),size:g('size'),grade:g('grade'),cls:g('cls'),rar:g('rar'),qty:Math.max(0,+g('qty')||0),loc:canonLoc(g('loc')),notes:g('notes'),owner:$('#f_own')?$('#f_own').value:(cur.owner||'')});
   if(isNew){cur.id=uid();cur.t=Date.now();S.items.push(cur)}else{const k=S.items.findIndex(x=>x.id===cur.id);if(k>=0)S.items[k]=cur}closeM();persist()},
  del(d,el){two(el,()=>{S.items=S.items.filter(x=>x.id!==cur.id);closeM();persist()})},
  newBuild:()=>editBuild(),editBuild:d=>editBuild(d.id),
@@ -381,6 +414,7 @@ document.addEventListener('click',e=>{
  if(e.target.id==='modal')closeM();
  else if(el=g('[data-t]')){tab=el.dataset.t;render()}
  else if(el=g('[data-c]')){F.cat=el.dataset.c;render()}
+ else if(el=g('[data-w]')){F.own=el.dataset.w;render()}
  else if(el=g('[data-q]')){const i=S.items.find(x=>x.id===g('.card').dataset.id);if(i){i.qty=Math.max(0,(+i.qty||0)+ +el.dataset.q);persist()}}
  else if(el=g('[data-act]'))acts[el.dataset.act](el.dataset,el);
  else if(el=g('.card'))editItem(el.dataset.id);
@@ -526,7 +560,7 @@ return{...api,norm,portsToSlots,classify,usd,vbase};
 // Per-record, three-way merge (what I have / what the room has / what we both last agreed on), so two people
 // editing different things never overwrite each other and deletions travel too.
 const SYNC=(()=>{
-const SYK='scv_sync',BK='scv_syncbase',KINDS=['items','builds','ships'];
+const SYK='scv_sync',BK='scv_syncbase',KINDS=['items','builds','ships','players'];
 const st={ok:null,err:'',last:0,seen:false,lrev:null,full:0,busy:false,again:false};
 let lv=0,kt=0;
 const cfg=()=>{try{return JSON.parse(localStorage.getItem(SYK)||'{}')||{}}catch(e){return{}}};
@@ -611,7 +645,7 @@ function showSync(msg,err){
  $('#box').innerHTML=s.on?`<div class="sy"><h2>SYNC // SHARED VAULT</h2><div class="st" id="sy_st">${syText(s)}</div><p class="dim">Send this sync code to your friend. They open the same page, press SYNC, paste it and press JOIN. Anyone with the code can edit this vault, so keep it private.</p><textarea id="sy_out" rows="2" readonly style="width:100%">${esc(s.code)}</textarea>${m}<p class="dim">Use RESET ALL or IMPORT with care while sharing: deletions are shared too.</p><div class="row"><button class="danger" data-act="syOff">DISCONNECT</button><span></span><button data-act="syNow">SYNC NOW</button><button class="pri" data-act="copySync">COPY CODE</button><button data-act="close">CLOSE</button></div></div>`
  :`<div class="sy"><h2>SYNC // SHARE WITH A FRIEND</h2><p class="dim">Both of you see and edit the same items, ships and builds, updated within a few seconds, whenever either of you has the page open. It uses a free Firebase database. Without sync, your vault lives only in this browser, so use DATA now and then to keep a backup.</p><div class="fm"><label class="w">I HAVE A SYNC CODE<span style="display:flex;gap:6px"><input id="sy_code" style="flex:1" placeholder="Paste the code your friend sent"><button class="pri" data-act="syJoin">JOIN</button></span></label><label class="w">OR START A NEW SHARED VAULT: FIREBASE DATABASE URL<span style="display:flex;gap:6px"><input id="sy_url" style="flex:1" placeholder="https://your-project-default-rtdb.firebaseio.com"><button class="pri" data-act="syNew">CREATE</button></span></label></div>${m}<details><summary>FIREBASE SETUP (ONCE, ABOUT 5 MINUTES, ONE OF YOU)</summary><ol><li>Go to console.firebase.google.com and create a project (you can turn Google Analytics off).</li><li>Build → Realtime Database → Create Database. Pick a location and start in locked mode.</li><li>Open the Rules tab, replace everything with the text below, and press Publish.</li><li>On the Data tab, copy the database URL shown at the top and paste it above, then press CREATE.</li><li>Send the sync code that appears to your friend.</li></ol><textarea rows="2" readonly style="width:100%;margin-top:8px">${esc(rules)}</textarea></details><div class="row"><span></span><button data-act="close">CLOSE</button></div></div>`;openM()}
 async function syGo(v){const m=$('#symsg');m.textContent='Connecting…';m.style.color='';
- try{await SYNC.connect(v);SY=SYNC.status();syncDot();showSync('Connected. Your friend can join with the code below.')}catch(e){m.textContent=String(e.message||e);m.style.color='#ff6b5b'}}
+ try{await SYNC.connect(v);SY=SYNC.status();syncDot();if(ME)showSync('Connected. Your friend can join with the code below.');else showProfile(true)}catch(e){m.textContent=String(e.message||e);m.style.color='#ff6b5b'}}
 
-(async()=>{render();SY=SYNC.status();syncDot();SYNC.start();setInterval(()=>{SY=SYNC.status();syncDot();const e=$('#sy_st');if(e)e.innerHTML=syText(SY)},1000);migrateShips()})();
+(async()=>{if(ensureMe())persist();render();SY=SYNC.status();syncDot();SYNC.start();setInterval(()=>{SY=SYNC.status();syncDot();const e=$('#sy_st');if(e)e.innerHTML=syText(SY)},1000);migrateShips()})();
 </script></body></html>
