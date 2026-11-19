@@ -89,7 +89,9 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
 .lr{display:flex;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid var(--line)}.lr .rd{width:8px;height:8px;border-radius:50%;flex:none;background:var(--r,#3cc8ff)}
 .lr .ln{flex:1;min-width:0;cursor:pointer}.lr .ln:hover{color:var(--acc)}.lr small{color:var(--dim);margin-left:6px}.lr b{font:700 12px Orbitron,sans-serif;color:var(--acc)}.lr button{padding:2px 9px;font-size:11px}
 
-.av{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--c,#3cc8ff);color:#04141f;font:700 10px Orbitron,sans-serif;margin-left:6px;vertical-align:1px;flex:none;letter-spacing:0}
+.av{display:inline-block;width:7px;height:7px;flex:none;margin-left:6px;vertical-align:1px;background:var(--c,#3cc8ff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.ow{display:inline-flex;align-items:center;gap:6px;max-width:120px;font:600 9px Orbitron,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}.ow .av{margin:0}
+.fl{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;min-width:0}.lr .ow{flex:none}
 #who .av,#meb .av,.lr .av{margin:0 6px 0 0}#meb{display:inline-flex;align-items:center}#who:empty{display:none}
 .pal{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--c)}.sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--c)}
 </style></head><body>
@@ -154,14 +156,16 @@ const PCOL=['#3cc8ff','#ff8a3c','#5fd36b','#e24ff0','#ffd83c','#ff5a7a','#9aa8ff
 let ME=null,PCUR='',PFIRST=false;try{ME=JSON.parse(localStorage.getItem('scv_me')||'null')}catch(e){}
 const pl=id=>id?(S.players||[]).find(p=>p.id===id):null;
 const ini=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
-const avatar=id=>{const p=pl(id);return p?`<span class="av" style="--c:${esc(p.color)}" title="${esc(p.name)}">${esc(ini(p.name))}</span>`:''};
+const multi=()=>(S.players||[]).length>1;
+const avatar=id=>{const p=multi()&&pl(id);return p?`<span class="av" style="--c:${esc(p.color)}" title="${esc(p.name)}"></span>`:''};
+const ownTag=id=>{const p=multi()&&pl(id);return p?`<span class="ow" title="Belongs to ${esc(p.name)}"><span class="av" style="--c:${esc(p.color)}"></span>${esc(p.name)}</span>`:''};
 const vis=L=>F.own?L.filter(o=>F.own==='__none'?!pl(o.owner):o.owner===F.own):L;
 const ownOpts=v=>'<option value="">Nobody (untagged)</option>'+(S.players||[]).map(p=>`<option value="${esc(p.id)}"${p.id===v?' selected':''}>${esc(p.name)}${ME&&p.id===ME.id?' (you)':''}</option>`).join('');
 const myId=()=>ME?ME.id:'';
 function ensureMe(){if(!ME)return false;S.players=S.players||[];if(S.players.some(p=>p.id===ME.id))return false;S.players.push({id:ME.id,name:ME.name,color:ME.color,t:Date.now()});return true}
 function whoBar(){
  const P=S.players||[],el=$('#who');
- $('#meb').innerHTML=ME?`<span class="av" style="--c:${esc(ME.color)}">${esc(ini(ME.name))}</span>${esc(ME.name)}`:'PROFILE';
+ $('#meb').innerHTML=ME?`<span class="av" style="--c:${esc(ME.color)}"></span>${esc(ME.name)}`:'PROFILE';
  if(P.length<2){el.innerHTML='';F.own='';return}
  if(F.own&&F.own!=='__none'&&!pl(F.own))F.own='';
  const cnt=id=>S.items.filter(i=>i.owner===id).length+S.ships.filter(x=>x.owner===id).length,un=S.items.filter(i=>!pl(i.owner)).length+S.ships.filter(x=>!pl(x.owner)).length;
@@ -209,8 +213,8 @@ function locsView(){
  $('#lsum').innerHTML=(q?'Showing places that hold “'+esc(q)+'”: ':'')+placed.length+' place'+(placed.length===1?'':'s')+(total&&!q?' · <b style="color:#ffb347">'+total+' entr'+(total===1?'y':'ies')+' without a location</b>':'');
  const card=e=>{const rows=e.items.length+e.ships.length,units=e.items.reduce((n,i)=>n+(+i.qty||0),0),k='l:'+(e.key||'none'),op=q?true:OPEN[k]!==undefined?OPEN[k]:rows<=6||!e.key,pl=PBY.get(e.key);
   return `<details class="grp lc${e.key?'':' un'}" data-k="${esc(k)}"${op?' open':''}><summary><span class="pn">${PIN}</span>${esc(e.name.toUpperCase())}${pl?`<span class="kd">${esc(pl[2])}</span>`:''}<em>${[e.items.length?e.items.length+' item'+(e.items.length===1?'':'s')+' · '+units+' unit'+(units===1?'':'s'):'',e.ships.length?e.ships.length+' ship'+(e.ships.length===1?'':'s'):''].filter(Boolean).join(' · ')}</em></summary>`+
-   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i>${avatar(s.owner)}<span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span><button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
-   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i>${avatar(i.owner)}<span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span><b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
+   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i><span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span>${ownTag(s.owner)}<button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
+   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i><span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span>${ownTag(i.owner)}<b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
  const areaOf=e=>{const p=PBY.get(e.key);return p?p[1]:'Your own places'},groups=new Map();
  placed.forEach(e=>{const a=areaOf(e);if(!groups.has(a))groups.set(a,[]);groups.get(a).push(e)});
  const order=[...AREAS,'Your own places'].filter(a=>groups.has(a));
@@ -234,7 +238,7 @@ function doMove(){
   else{o.loc=to;o.owner=ow}}
  else{o.qty=q-n;if(dest)dest.qty=(+dest.qty||0)+n;else S.items.push({...o,id:uid(),t:Date.now(),qty:n,loc:to,owner:ow})}
  closeM();persist()}
-function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}${avatar(i.owner)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span>${i.loc?'▸ '+esc(i.loc):''}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
+function card(i){return `<article class="card" style="--r:${RC[i.rar]||'#3cc8ff'}" data-id="${i.id}"><div class="ic">${ico(i.cat)}</div><h3>${esc(i.name)}</h3><div class="m">${[i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).map(esc).join(' · ')}${i.mfr?'<br>'+esc(i.mfr):''}</div><div class="tags"><span class="rar">${esc(i.rar)}</span>${i.cls?`<span>${esc(i.cls)}</span>`:''}${i.craft?'<span>craftable</span>':''}${i.src==='wiki'?'<span title="From the Star Citizen Wiki">✓ wiki</span>':''}${fitTag(i)}</div><div class="foot"><span class="fl">${i.loc?'<span>▸ '+esc(i.loc)+'</span>':''}${ownTag(i.owner)}</span><span class="q"><i data-q="-1">−</i><b>×${+i.qty||0}</b><i data-q="1">+</i></span></div></article>`}
 function vault(){
  const I=vis(S.items),q=F.q.toLowerCase();
  $('#cats').innerHTML=['All',...Object.keys(CATS)].map(c=>`<button class="${F.cat===c?'on':''}" data-c="${c}">${c==='All'?'':ico(c)}${c.toUpperCase()} <em>${c==='All'?I.length:I.filter(i=>i.cat===c).length}</em></button>`).join('');
@@ -322,9 +326,9 @@ const shipRar=h=>h.rarOv||(MYTHIC.test(h.name||'')?'Mythic':rarFromPrice(h.msrp)
 const CHIPS=[['Shield','Shields'],['Power Plant','Power'],['Cooler','Coolers'],['Quantum Drive','QD'],['Gun','Guns'],['Turret','Turrets'],['Missile Rack','Racks']];
 const isOpen=h=>!!OPEN['s:'+h.id];
 function shipCard(h){
- const sl=h.slots||[],fl=sl.filter(s=>s.item).length,r=shipRar(h),op=isOpen(h),nm=shipName(h);
+ const sl=h.slots||[],fl=sl.filter(s=>s.item).length,r=shipRar(h),op=isOpen(h),nm=shipName(h),ot=ownTag(h.owner);
  const sum=CHIPS.map(([t,l])=>{const L=sl.filter(s=>s.type===t);if(!L.length)return '';const f=L.filter(s=>s.item).length,z=[...new Set(L.map(s=>s.size).filter(Boolean))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));return `<span class="${f?'on':''}" title="${L.length} slot${L.length>1?'s':''}${f?', '+f+' fitted from your vault':''}">${l}<b>${esc(z.join(' / ')||'–')}</b></span>`}).join('')+(+h.cargo>0?`<span>Cargo<b>${+h.cargo} SCU</b></span>`:'');
- return `<article class="scard" style="--r:${shipCol(h)}"><div class="sh" data-act="toggleShip" data-id="${h.id}"><div class="ic">${ico('Ships')}</div><div><h3>${esc(nm)}${avatar(h.owner)}</h3><div class="m">${esc([h.nick&&h.name,h.mfr,h.role,h.size&&'Size '+h.size].filter(Boolean).join(' · '))}</div></div><div class="rt"><span class="chip">${esc(r||'Unpriced')}</span>${h.msrp?`<span class="px">$${(+h.msrp).toLocaleString('en-US')}</span>`:''}</div></div><div class="sum">${sum}</div><div class="bar2"><span style="width:${sl.length?fl/sl.length*100:0}%"></span></div><div class="m">${sl.length} slots · ${fl} fitted from your vault, the rest stock${h.loc?' · ▸ '+esc(h.loc):''}</div>${h.notes?`<div class="m">${esc(h.notes)}</div>`:''}<div class="sbtns"><button class="tg" data-act="toggleShip" data-id="${h.id}">${op?'▴ HIDE COMPONENTS':'▾ COMPONENTS'}</button><button data-act="editShip" data-id="${h.id}">EDIT SHIP</button></div>${op?`<div class="comp"><div class="slots">${slotGroups(h)}</div>${h.slug?`<div class="sbtns"><button data-act="refreshShip" data-id="${h.id}" title="Re-read the default loadout and price from the wiki">↻ REFRESH SLOTS</button></div>`:''}</div>`:''}</article>`}
+ return `<article class="scard" style="--r:${shipCol(h)}"><div class="sh" data-act="toggleShip" data-id="${h.id}"><div class="ic">${ico('Ships')}</div><div><h3>${esc(nm)}</h3><div class="m">${esc([h.nick&&h.name,h.mfr,h.role,h.size&&'Size '+h.size].filter(Boolean).join(' · '))}</div></div><div class="rt"><span class="chip">${esc(r||'Unpriced')}</span>${h.msrp?`<span class="px">$${(+h.msrp).toLocaleString('en-US')}</span>`:''}</div></div><div class="sum">${sum}</div><div class="bar2"><span style="width:${sl.length?fl/sl.length*100:0}%"></span></div><div class="m">${sl.length} slots · ${fl} fitted from your vault, the rest stock${h.loc?' · ▸ '+esc(h.loc):''}${ot?' · '+ot:''}</div>${h.notes?`<div class="m">${esc(h.notes)}</div>`:''}<div class="sbtns"><button class="tg" data-act="toggleShip" data-id="${h.id}">${op?'▴ HIDE COMPONENTS':'▾ COMPONENTS'}</button><button data-act="editShip" data-id="${h.id}">EDIT SHIP</button></div>${op?`<div class="comp"><div class="slots">${slotGroups(h)}</div>${h.slug?`<div class="sbtns"><button data-act="refreshShip" data-id="${h.id}" title="Re-read the default loadout and price from the wiki">↻ REFRESH SLOTS</button></div>`:''}</div>`:''}</article>`}
 function fleet(){
  const k=($('#fsh')||{}).value||'rar',R=h=>SRAR.indexOf(shipRar(h)),A=[...vis(S.ships)];
  A.sort((a,b)=>k==='price'?(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)):k==='name'?shipName(a).localeCompare(shipName(b)):k==='size'?(+b.size||0)-(+a.size||0)||shipName(a).localeCompare(shipName(b)):k==='new'?(b.t||0)-(a.t||0):R(b)-R(a)||(+b.msrp||0)-(+a.msrp||0)||shipName(a).localeCompare(shipName(b)));
