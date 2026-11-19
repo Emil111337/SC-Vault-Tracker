@@ -156,9 +156,8 @@ const PCOL=['#3cc8ff','#ff8a3c','#5fd36b','#e24ff0','#ffd83c','#ff5a7a','#9aa8ff
 let ME=null,PCUR='',PFIRST=false;try{ME=JSON.parse(localStorage.getItem('scv_me')||'null')}catch(e){}
 const pl=id=>id?(S.players||[]).find(p=>p.id===id):null;
 const ini=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
-const multi=()=>(S.players||[]).length>1;
-const avatar=id=>{const p=multi()&&pl(id);return p?`<span class="av" style="--c:${esc(p.color)}" title="${esc(p.name)}"></span>`:''};
-const ownTag=id=>{const p=multi()&&pl(id);return p?`<span class="ow" title="Belongs to ${esc(p.name)}"><span class="av" style="--c:${esc(p.color)}"></span>${esc(p.name)}</span>`:''};
+const avatar=id=>{const p=pl(id);return p?`<span class="av" style="--c:${esc(p.color)}" title="${esc(p.name)}"></span>`:''};
+const ownTag=id=>{const p=pl(id);return p?`<span class="ow" title="Belongs to ${esc(p.name)}"><span class="av" style="--c:${esc(p.color)}"></span>${esc(p.name)}</span>`:''};
 const vis=L=>F.own?L.filter(o=>F.own==='__none'?!pl(o.owner):o.owner===F.own):L;
 const ownOpts=v=>'<option value="">Nobody (untagged)</option>'+(S.players||[]).map(p=>`<option value="${esc(p.id)}"${p.id===v?' selected':''}>${esc(p.name)}${ME&&p.id===ME.id?' (you)':''}</option>`).join('');
 const myId=()=>ME?ME.id:'';
