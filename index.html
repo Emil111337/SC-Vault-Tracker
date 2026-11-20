@@ -94,6 +94,9 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
 .fl{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;min-width:0}.lr .ow{flex:none}
 #who .av,#meb .av,.lr .av{margin:0 6px 0 0}#meb{display:inline-flex;align-items:center}#who:empty{display:none}
 .pal{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--c)}.sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--c)}
+.ck{width:16px;height:16px;margin:0;flex:none;accent-color:var(--acc);cursor:pointer;padding:0}.lr.sel{background:rgba(60,200,255,.1)}
+.pk{font:700 9px Orbitron,sans-serif;letter-spacing:.12em;border:1px solid var(--line);padding:1px 6px;margin-left:8px;color:var(--dim);cursor:pointer}.pk:hover,.pk.on{color:var(--acc);border-color:var(--acc)}
+#selbar{position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--acc);box-shadow:var(--glow)}#selbar input{flex:1 1 220px}#selbar b{font-size:12px;letter-spacing:.14em;color:var(--acc)}
 </style></head><body>
 <header>
  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 7l4.5 2.5v5L12 17l-4.5-2.5v-5z"/></svg><div><b>RARE LOOT VAULT</b><small>PERSONAL INVENTORY // MOBIGLAS</small></div></div>
@@ -120,9 +123,10 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}.bar input{
   <div id="sgrid" style="margin-top:12px"></div>
  </section>
 <section id="locsec" hidden>
-  <div class="qa"><input id="lq" placeholder="Where is…? Type an item or ship name to find every place it is stored"></div>
+  <div class="qa"><input id="lq" placeholder="Where is…? Type an item or ship name to find every place it is stored"><button data-act="selAll">SELECT ALL SHOWN</button></div>
   <div class="dim" id="lsum" style="margin:6px 0 12px"></div>
   <div id="lgrid" class="lcols"></div>
+  <div id="selbar" hidden><b class="orb" id="selct"></b><input id="selto" list="locdl" autocomplete="off" placeholder="Move everything selected to… (station, city, moon)"><button class="pri" data-act="selMove">MOVE SELECTED</button><button data-act="selClear">CLEAR</button></div>
  </section>
 </main>
 <footer style="text-align:center;color:var(--dim);font-size:12px;padding:0 0 24px">Item data: Star Citizen Wiki API (api.star-citizen.wiki). Your vault is saved in this browser; use SYNC to share it with a friend, and DATA to keep a backup.</footer>
@@ -203,25 +207,25 @@ function locList(){const u=usedLocs(),sig=[...u.keys()].sort().join('|');if(sig=
  $('#locdl').innerHTML=[...[...u.values()].sort((a,b)=>b.items+b.ships-a.items-a.ships).map(e=>[e.name,'in your vault · '+ctx(e.name)]),...PLACES.filter(p=>!u.has(locKey(p[0]))).map(p=>[p[0],p[1]+' · '+p[2]])].map(([v,l])=>`<option value="${esc(v)}" label="${esc(l)}"></option>`).join('')}
 const PIN='<svg viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 const stackKey=i=>[i.name,i.cat,i.sub,i.size,i.grade,i.cls,i.mfr,i.rar,i.slug,i.owner].map(x=>String(x||'').toLowerCase()).join('|');
-function locsView(){
+function locsView(){PLROWS={};
  const q=($('#lq').value||'').trim().toLowerCase(),m=new Map(),slot=l=>{const k=locKey(l);let e=m.get(k);if(!e){e={key:k,name:k?locName(l):'No location set',items:[],ships:[]};m.set(k,e)}return e};
  const hit=t=>!q||t.toLowerCase().includes(q);
  vis(S.items).filter(i=>hit([i.name,i.mfr,i.sub,i.size,i.notes].join(' '))).forEach(i=>slot(i.loc).items.push(i));
  vis(S.ships).filter(s=>hit([shipName(s),s.name,s.mfr,s.role,s.notes].join(' '))).forEach(s=>slot(s.loc).ships.push(s));
  const all=[...m.values()],un=all.find(e=>!e.key),placed=all.filter(e=>e.key),total=vis(S.items).filter(i=>!locKey(i.loc)).length+vis(S.ships).filter(s=>!locKey(s.loc)).length;
- $('#lsum').innerHTML=(q?'Showing places that hold “'+esc(q)+'”: ':'')+placed.length+' place'+(placed.length===1?'':'s')+(total&&!q?' · <b style="color:#ffb347">'+total+' entr'+(total===1?'y':'ies')+' without a location</b>':'');
- const card=e=>{const rows=e.items.length+e.ships.length,units=e.items.reduce((n,i)=>n+(+i.qty||0),0),k='l:'+(e.key||'none'),op=q?true:OPEN[k]!==undefined?OPEN[k]:rows<=6||!e.key,pl=PBY.get(e.key);
-  return `<details class="grp lc${e.key?'':' un'}" data-k="${esc(k)}"${op?' open':''}><summary><span class="pn">${PIN}</span>${esc(e.name.toUpperCase())}${pl?`<span class="kd">${esc(pl[2])}</span>`:''}<em>${[e.items.length?e.items.length+' item'+(e.items.length===1?'':'s')+' · '+units+' unit'+(units===1?'':'s'):'',e.ships.length?e.ships.length+' ship'+(e.ships.length===1?'':'s'):''].filter(Boolean).join(' · ')}</em></summary>`+
-   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr" style="--r:${shipCol(s)}"><i class="rd"></i><span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span>${ownTag(s.owner)}<button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
-   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr" style="--r:${RC[i.rar]||'#3cc8ff'}"><i class="rd"></i><span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span>${ownTag(i.owner)}<b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
+ $('#lsum').innerHTML=(LNOTE?'<span class="ok">'+esc(LNOTE)+'</span> · ':'')+(q?'Showing places that hold “'+esc(q)+'”: ':'')+placed.length+' place'+(placed.length===1?'':'s')+(total&&!q?' · <b style="color:#ffb347">'+total+' entr'+(total===1?'y':'ies')+' without a location</b>':'');
+ const card=e=>{const rows=e.items.length+e.ships.length,units=e.items.reduce((n,i)=>n+(+i.qty||0),0),k='l:'+(e.key||'none'),op=q?true:OPEN[k]!==undefined?OPEN[k]:rows<=6||!e.key,pl=PBY.get(e.key),ks=[...e.ships.map(s=>'s:'+s.id),...e.items.map(i=>'i:'+i.id)],all=ks.length>0&&ks.every(x=>SEL.has(x));PLROWS[k]=ks;
+  return `<details class="grp lc${e.key?'':' un'}" data-k="${esc(k)}"${op?' open':''}><summary><span class="pn">${PIN}</span>${esc(e.name.toUpperCase())}${pl?`<span class="kd">${esc(pl[2])}</span>`:''}<em>${[e.items.length?e.items.length+' item'+(e.items.length===1?'':'s')+' · '+units+' unit'+(units===1?'':'s'):'',e.ships.length?e.ships.length+' ship'+(e.ships.length===1?'':'s'):''].filter(Boolean).join(' · ')}</em><span class="pk${all?' on':''}" data-act="selPlace" data-pk="${esc(k)}">${all?'DESELECT':'SELECT ALL'}</span></summary>`+
+   e.ships.sort((a,b)=>shipName(a).localeCompare(shipName(b))).map(s=>`<div class="lr${SEL.has('s:'+s.id)?' sel':''}" style="--r:${shipCol(s)}"><input type="checkbox" class="ck" data-act="sel" data-k="s:${s.id}"${SEL.has('s:'+s.id)?' checked':''}><i class="rd"></i><span class="ln" data-act="editShip" data-id="${s.id}">${esc(shipName(s))}<small>ship · ${esc([s.mfr,s.role].filter(Boolean).join(' · '))}</small></span>${ownTag(s.owner)}<button data-act="moveShip" data-id="${s.id}">MOVE</button></div>`).join('')+
+   e.items.sort((a,b)=>RAR.indexOf(b.rar)-RAR.indexOf(a.rar)||a.name.localeCompare(b.name)).map(i=>`<div class="lr${SEL.has('i:'+i.id)?' sel':''}" style="--r:${RC[i.rar]||'#3cc8ff'}"><input type="checkbox" class="ck" data-act="sel" data-k="i:${i.id}"${SEL.has('i:'+i.id)?' checked':''}><i class="rd"></i><span class="ln" data-act="editItemRow" data-id="${i.id}">${esc(i.name)}<small>${esc([i.sub,i.size,i.grade&&'Grade '+i.grade].filter(Boolean).join(' · '))}</small></span>${ownTag(i.owner)}<b>×${+i.qty||0}</b><button data-act="moveItem" data-id="${i.id}">MOVE</button></div>`).join('')+`</details>`};
  const areaOf=e=>{const p=PBY.get(e.key);return p?p[1]:'Your own places'},groups=new Map();
  placed.forEach(e=>{const a=areaOf(e);if(!groups.has(a))groups.set(a,[]);groups.get(a).push(e)});
  const order=[...AREAS,'Your own places'].filter(a=>groups.has(a));
  const sortIn=(a,e)=>e.sort((x,y)=>a==='Your own places'?x.name.localeCompare(y.name):PBY.get(x.key)[3]-PBY.get(y.key)[3]);
  let out=un?`<div class="gh" style="color:#ffb347"><span class="pn">${PIN}</span><span>NOT PLACED YET</span><em>use MOVE to give them a location</em></div>`+card(un):'';
  order.forEach(a=>{const L=sortIn(a,groups.get(a));out+=`<div class="gh"><span>${esc(a.toUpperCase())}</span><em>${L.length}</em></div>`+L.map(card).join('')});
- $('#lgrid').innerHTML=out||`<div class="empty" style="grid-column:1/-1"><h3 class="orb">${q?'NOTHING FOUND':'NOTHING STORED YET'}</h3>${q?'No item or ship matches that name.':'Give your items a location (STORED AT) and they will show up here, grouped by place.'}</div>`}
-let mv=null;
+ [...SEL].forEach(k=>{if(!(k[0]==='s'?S.ships:S.items).some(x=>x.id===k.slice(2)))SEL.delete(k)});$('#selbar').hidden=!SEL.size;$('#selct').textContent=SEL.size+' SELECTED';$('#lgrid').innerHTML=out||`<div class="empty" style="grid-column:1/-1"><h3 class="orb">${q?'NOTHING FOUND':'NOTHING STORED YET'}</h3>${q?'No item or ship matches that name.':'Give your items a location (STORED AT) and they will show up here, grouped by place.'}</div>`}
+let mv=null,LNOTE='',PLROWS={};const SEL=new Set();
 function moveForm(kind,id){
  const o=(kind==='i'?S.items:S.ships).find(x=>x.id===id);if(!o)return;mv={kind,id};const it=kind==='i',q=it?(+o.qty||0):1,pn=(S.players||[]).length>1;
  $('#box').innerHTML=`<h2>MOVE ${it?'ITEM':'SHIP'}</h2><p class="dim"><b>${esc(it?o.name:shipName(o))}</b>${it?' ×'+q:''} is at <b>${esc(o.loc||'no location set')}</b>${pl(o.owner)?' and belongs to <b>'+esc(pl(o.owner).name)+'</b>':''}.</p><div class="fm">${it&&q>1?`<label>HOW MANY TO MOVE<input id="mv_n" type="number" min="1" max="${q}" value="${q}"></label>`:''}<label class="w">MOVE TO<input id="mv_to" list="locdl" autocomplete="off" placeholder="Start typing a station, city, moon…" value="${esc(o.loc||'')}"></label>${pn?`<label class="w">BELONGS TO (change it to hand it over)<select id="mv_own">${ownOpts(o.owner||'')}</select></label>`:''}</div><div class="row"><span></span><button data-act="close">CANCEL</button><button class="pri" data-act="doMove">MOVE</button></div>`;openM();$('#mv_to').focus();$('#mv_to').select()}
@@ -384,6 +388,24 @@ function equip(id){const h=S.ships.find(x=>x.id===PK.h),s=h&&h.slots.find(x=>x.i
 const two=(el,fn,t)=>{if(el.dataset.s)fn();else{el.dataset.s=1;el.textContent=t||'CONFIRM?'}};
 const acts={
  add:()=>editItem(),close:closeM,me:()=>showProfile(),meCol(d){PCUR=d.col;document.querySelectorAll('.sw').forEach(e=>e.classList.toggle('on',e.dataset.col===d.col))},meSave,moveItem:d=>moveForm('i',d.id),moveShip:d=>moveForm('s',d.id),doMove,editItemRow:d=>editItem(d.id),sync:()=>showSync(),
+ sel(d,el){el.checked?SEL.add(d.k):SEL.delete(d.k);LNOTE='';locsView()},
+ selPlace(d,el,e){e.preventDefault();const ks=PLROWS[d.pk]||[],all=ks.length&&ks.every(k=>SEL.has(k));ks.forEach(k=>all?SEL.delete(k):SEL.add(k));LNOTE='';locsView()},
+ selAll(){Object.values(PLROWS).forEach(a=>a.forEach(k=>SEL.add(k)));LNOTE='';locsView()},
+ selClear(){SEL.clear();LNOTE='';locsView()},
+ selMove(){
+  const to=canonLoc($('#selto').value);if(!to)return $('#selto').focus();
+  const tk=locKey(to),rm=new Set();let n=0,u=0;
+  for(const k of [...SEL]){
+   const ship=k[0]==='s',o=(ship?S.ships:S.items).find(x=>x.id===k.slice(2));
+   if(!o||locKey(o.loc)===tk)continue;
+   n++;if(ship){o.loc=to;continue}
+   const q=+o.qty||0;u+=q;
+   const dest=S.items.find(x=>x!==o&&!rm.has(x)&&locKey(x.loc)===tk&&stackKey(x)===stackKey(o));
+   if(dest){dest.qty=(+dest.qty||0)+q;S.ships.forEach(h=>(h.slots||[]).forEach(s=>{if(s.item===o.id)s.item=dest.id}));rm.add(o)}
+   else o.loc=to}
+  if(!n){LNOTE='Everything selected is already at '+to+'.';return locsView()}
+  if(rm.size)S.items=S.items.filter(x=>!rm.has(x));
+  SEL.clear();$('#selto').value='';LNOTE='Moved '+n+' entr'+(n===1?'y':'ies')+' to '+to+'.';persist()},
  syJoin(){const v=$('#sy_code').value.trim();if(!v)return $('#sy_code').focus();return syGo(v)},
  syNew(){const v=$('#sy_url').value.trim();if(!v)return $('#sy_url').focus();return syGo(v)},
  syNow(){SYNC.now();showSync('Syncing…')},
@@ -419,14 +441,14 @@ document.addEventListener('click',e=>{
  else if(el=g('[data-c]')){F.cat=el.dataset.c;render()}
  else if(el=g('[data-w]')){F.own=el.dataset.w;render()}
  else if(el=g('[data-q]')){const i=S.items.find(x=>x.id===g('.card').dataset.id);if(i){i.qty=Math.max(0,(+i.qty||0)+ +el.dataset.q);persist()}}
- else if(el=g('[data-act]'))acts[el.dataset.act](el.dataset,el);
+ else if(el=g('[data-act]'))acts[el.dataset.act](el.dataset,el,e);
  else if(el=g('.card'))editItem(el.dataset.id);
 });
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.k)cb.slots[t.dataset.s][t.dataset.k]=t.dataset.k==='qty'?Math.max(1,+t.value||1):t.value});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();if(e.key==='Enter'){if(e.target.id==='qa')quick();else if(e.target.id==='sq')quickShip();else if(e.target.id==='f_name'){e.preventDefault();fillForm(document.querySelector('[data-act=fill]'))}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();if(e.key==='Enter'){if(e.target.id==='qa')quick();else if(e.target.id==='sq')quickShip();else if(e.target.id==='selto')acts.selMove();else if(e.target.id==='f_name'){e.preventDefault();fillForm(document.querySelector('[data-act=fill]'))}}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.classList&&d.classList.contains('grp'))OPEN[d.dataset.k]=d.open},true);
 $('#fcls').innerHTML='<option value="">All classes</option>'+opts(CLS);$('#frar').innerHTML='<option value="">All rarities</option>'+opts(RAR);
-$('#q').oninput=e=>{F.q=e.target.value;vault()};$('#fcls').onchange=e=>{F.cls=e.target.value;vault()};$('#frar').onchange=e=>{F.rar=e.target.value;vault()};$('#fsort').onchange=e=>{F.sort=e.target.value;vault()};$('#floc').onchange=e=>{F.loc=e.target.value;vault()};$('#lq').oninput=()=>locsView();try{$('#qloc').value=localStorage.getItem('scv_qloc')||''}catch(e){}$('#qloc').oninput=e=>{try{localStorage.setItem('scv_qloc',e.target.value)}catch(x){}};$('#fsh').onchange=()=>fleet();$('#fequ').onchange=e=>{F.equ=e.target.value;vault()};
+$('#q').oninput=e=>{F.q=e.target.value;vault()};$('#fcls').onchange=e=>{F.cls=e.target.value;vault()};$('#frar').onchange=e=>{F.rar=e.target.value;vault()};$('#fsort').onchange=e=>{F.sort=e.target.value;vault()};$('#floc').onchange=e=>{F.loc=e.target.value;vault()};$('#lq').oninput=()=>{LNOTE='';locsView()};try{$('#qloc').value=localStorage.getItem('scv_qloc')||''}catch(e){}$('#qloc').oninput=e=>{try{localStorage.setItem('scv_qloc',e.target.value)}catch(x){}};$('#fsh').onchange=()=>fleet();$('#fequ').onchange=e=>{F.equ=e.target.value;vault()};
 render();
 // ---- Star Citizen Wiki lookups, straight from the browser (port of the old local helper) ----
 const WIKI=(()=>{
